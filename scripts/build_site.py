@@ -78,6 +78,25 @@ def render_status_strip(manifest: dict[str, Any]) -> str:
     """
 
 
+def render_team_hero(manifest: dict[str, Any]) -> str:
+    team_members = manifest.get("team", [])
+    if not team_members:
+        return ""
+    team_items = []
+    for m in team_members:
+        m_name = esc(m.get("name", ""))
+        m_role = esc(m.get("role", "") or "Colaborador")
+        m_gh = m.get("github_username")
+        gh_link = (
+            f' (<a href="https://github.com/{urllib.parse.quote(m_gh)}" target="_blank" rel="noopener noreferrer" style="color:#FFC800; text-decoration:underline;">@{esc(m_gh)}</a>)'
+            if m_gh
+            else ""
+        )
+        team_items.append(f'<span><strong>{m_role}:</strong> {m_name}{gh_link}</span>')
+    return f'<div class="hero-team" style="margin:-0.25rem 0 1rem; color:#E2E8F8; font-size:1.05rem; display:flex; flex-wrap:wrap; gap:1.25rem; align-items:center;">{" · ".join(team_items)}</div>'
+
+
+
 def render_shell(
     *,
     ctx: SiteContext,
@@ -554,6 +573,7 @@ def build_home_page(
           {badge_html(manifest['pmv']['scope_status'], 'Alcance PMV')}
         </div>
         <h1>{esc(manifest['title'])}</h1>
+        {render_team_hero(manifest)}
         <p class="hero-lead">{esc(manifest['summary'])}</p>
         <div class="hero-actions">
           <a class="btn btn-primary" href="{html.escape(ctx.site_url('aplicacion/'), quote=True)}">Abrir Geovisor (GeoLibre)</a>
@@ -735,6 +755,7 @@ def build_proyecto_page(
           <span class="badge badge-country">{esc(manifest['id'])}</span>
         </div>
         <h1>{esc(manifest['title'])}</h1>
+        {render_team_hero(manifest)}
         <p class="hero-lead">Alcance territorial en {esc(manifest['territory']['label'])}, criterios del PMV, instituciones participantes y trazabilidad documental desde <code>project.json</code>.</p>
       </div>
     </section>

@@ -193,7 +193,15 @@
       }
     ]
   },
-  "team": [],
+  "team": [
+    {
+      "name": "Fernando Aguilar",
+      "role": "Técnico",
+      "institution": null,
+      "github_username": "fernando70",
+      "profile_url": "https://github.com/fernando70"
+    }
+  ],
   "data_sources": [
     {
       "title": "Sentinel-2 / óptico multiespectral",

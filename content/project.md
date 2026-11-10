@@ -1,5 +1,7 @@
 # AMSS: expansión urbana y transformación del suelo
 
+> **Colaborador técnico:** Fernando Aguilar ([@fernando70](https://github.com/fernando70))
+
 La iniciativa integra información de expansión urbana, permisos de construcción y valores del suelo para examinar las transformaciones del Área Metropolitana de San Salvador y apoyar sus instrumentos de planificación y gestión territorial.
 
 ## Propósito

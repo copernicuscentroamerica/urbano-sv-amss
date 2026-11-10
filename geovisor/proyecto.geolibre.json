@@ -1,0 +1,55 @@
+{
+  "version": "1.0.0",
+  "id": "geolibre-sv-amss",
+  "name": "El Salvador · AMSS: expansión urbana y transformación del suelo",
+  "description": "La iniciativa integra información de expansión urbana, permisos de construcción y valores del suelo para examinar las transformaciones del Área Metropolitana de San Salvador y apoyar sus instrumentos de planificación y gestión territorial.",
+  "metadata": {
+    "project_id": "sv-amss",
+    "community": "Comunidad Urbana Copernicus Centroamérica",
+    "referential_frame_only": true,
+    "note": "Centroide declarado en formulario S10: 13.61892, -89.31432 (14 distritos del AMSS, ≈ 165.107 ha). Perímetro vectorial Perimetro_AMSS-14_26_13.zip pendiente de incorporación."
+  },
+  "map": {
+    "engine": "maplibre",
+    "center": [
+      -89.2182,
+      13.6989
+    ],
+    "zoom": 10.8,
+    "bearing": 0,
+    "pitch": 0,
+    "basemap": "carto-positron"
+  },
+  "sources": {},
+  "layers": [],
+  "planned_layers": [
+    {
+      "id": "sv-amss-perimetro-distritos",
+      "title": "Límite oficial de los 14 distritos del AMSS y UPD 2025",
+      "status": "en_preparacion",
+      "expected_file_hint": "geovisor/data/amss_14_distritos.geojson",
+      "caveat": "Requiere incorporar el perímetro oficial homologado de los 14 distritos."
+    },
+    {
+      "id": "sv-amss-expansion-urbana",
+      "title": "Huella y expansión urbana multitemporal (Sentinel-2 / GHSL)",
+      "status": "en_preparacion",
+      "expected_file_hint": "geovisor/data/amss_expansion_urbana.geojson",
+      "caveat": "Pendiente de validación topológica sin solapes ni huecos sobre los 14 distritos."
+    },
+    {
+      "id": "sv-amss-isovalores-suelo",
+      "title": "Rangos interpolados de valor del suelo (isovalores agregados)",
+      "status": "en_preparacion",
+      "expected_file_hint": "geovisor/data/amss_rangos_valor_suelo.geojson",
+      "caveat": "Basado en trámites y web scraping 2025 de cobertura parcial; distinguir zonas sin muestra suficiente y no exponer datos personales de expedientes."
+    },
+    {
+      "id": "sv-amss-tipologias-expansion",
+      "title": "Tipologías de expansión urbana e inversión territorial",
+      "status": "en_preparacion",
+      "expected_file_hint": "geovisor/data/amss_tipologias.geojson",
+      "caveat": "Sujeto a revisión técnica y acta de validación del Product Owner en OPAMSS."
+    }
+  ]
+}

@@ -1,0 +1,118 @@
+{
+  "schema_version": "1.0.0",
+  "project_id": "sv-amss",
+  "title": "AMSS: expansión urbana y transformación del suelo",
+  "country": {
+    "code": "SV",
+    "name": "El Salvador"
+  },
+  "map_view": {
+    "center": [
+      -89.2182,
+      13.6989
+    ],
+    "zoom": 10.8,
+    "declared_centroid": [
+      -89.31432,
+      13.61892
+    ],
+    "is_referential": true,
+    "reference_note": "Centroide declarado en formulario S10: 13.61892, -89.31432 (14 distritos del AMSS, ≈ 165.107 ha). Perímetro vectorial Perimetro_AMSS-14_26_13.zip pendiente de incorporación.",
+    "area_declared": "165.107 ha (≈ 1.651 km²) en 14 distritos del AMSS según S10.",
+    "scale_label": "Área urbana metropolitana / conurbación (14 distritos)"
+  },
+  "geolibre_integration": {
+    "web_app_base_url": "https://web.geolibre.app/",
+    "project_file": "geovisor/proyecto.geolibre.json",
+    "embed_layout": "maponly",
+    "supports_local_geojson_preview": true
+  },
+  "planned_controls": [
+    "Selector temporal de huella urbana (línea base 2015/2020 frente a corte 2026) y comparador de cortina (swipe).",
+    "Filtro espacial por los 14 distritos del AMSS y Unidades de Planificación Detallada (UPD 2025).",
+    "Conmutador de rangos de valor del suelo interpolados (manteniendo explícita la unidad USD/m² o USD/v² y el RMSE).",
+    "Panel comparativo entre expansión de mancha urbana, densidad de permisos históricos (1990–2026) y tipologías de expansión."
+  ],
+  "external_references": [
+    {
+      "label": "Geoportal institucional NIX — OPAMSS (referencia declarada)",
+      "url": "https://nix.opamss.org.sv/",
+      "kind": "referencia_declarada",
+      "note": "Sistema institucional existente citado en S10 como referencia; no equivale al nuevo prototipo del PMV."
+    }
+  ],
+  "layers": [
+    {
+      "id": "sv-amss-perimetro-distritos",
+      "title": "Límite oficial de los 14 distritos del AMSS y UPD 2025",
+      "group": "Ámbito metropolitano",
+      "format": "geojson",
+      "geometry_type": "polygon",
+      "status": "en_preparacion",
+      "source_path": null,
+      "expected_file_hint": "geovisor/data/amss_14_distritos.geojson",
+      "resolution": "Vectorial oficial OPAMSS",
+      "style": {
+        "fill_color": "#14283F",
+        "fill_opacity": 0.08,
+        "stroke_color": "#14283F",
+        "stroke_width": 2
+      },
+      "caveat": "Requiere incorporar el perímetro oficial homologado de los 14 distritos."
+    },
+    {
+      "id": "sv-amss-expansion-urbana",
+      "title": "Huella y expansión urbana multitemporal (Sentinel-2 / GHSL)",
+      "group": "Dinámica física",
+      "format": "geojson",
+      "geometry_type": "polygon",
+      "status": "en_preparacion",
+      "source_path": null,
+      "expected_file_hint": "geovisor/data/amss_expansion_urbana.geojson",
+      "resolution": "10 m (Sentinel-2)",
+      "style": {
+        "fill_color": "#007F8B",
+        "fill_opacity": 0.45,
+        "stroke_color": "#005a63",
+        "stroke_width": 1
+      },
+      "caveat": "Pendiente de validación topológica sin solapes ni huecos sobre los 14 distritos."
+    },
+    {
+      "id": "sv-amss-isovalores-suelo",
+      "title": "Rangos interpolados de valor del suelo (isovalores agregados)",
+      "group": "Mercado y gestión del suelo",
+      "format": "geojson",
+      "geometry_type": "polygon",
+      "status": "en_preparacion",
+      "source_path": null,
+      "expected_file_hint": "geovisor/data/amss_rangos_valor_suelo.geojson",
+      "resolution": "Polígonos reclasificados con RMSE documentado",
+      "style": {
+        "fill_color": "#C9DA4D",
+        "fill_opacity": 0.5,
+        "stroke_color": "#14283F",
+        "stroke_width": 1
+      },
+      "caveat": "Basado en trámites y web scraping 2025 de cobertura parcial; distinguir zonas sin muestra suficiente y no exponer datos personales de expedientes."
+    },
+    {
+      "id": "sv-amss-tipologias-expansion",
+      "title": "Tipologías de expansión urbana e inversión territorial",
+      "group": "Síntesis para planificación",
+      "format": "geojson",
+      "geometry_type": "polygon",
+      "status": "en_preparacion",
+      "source_path": null,
+      "expected_file_hint": "geovisor/data/amss_tipologias.geojson",
+      "resolution": "Agregación por distrito / UPD",
+      "style": {
+        "fill_color": "#e6ab02",
+        "fill_opacity": 0.45,
+        "stroke_color": "#14283F",
+        "stroke_width": 1.2
+      },
+      "caveat": "Sujeto a revisión técnica y acta de validación del Product Owner en OPAMSS."
+    }
+  ]
+}

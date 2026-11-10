@@ -193,7 +193,29 @@
       }
     ]
   },
-  "team": [],
+  "team": [
+    {
+      "name": "Fabio Gracias",
+      "role": "Integrante",
+      "institution": "OPAMSS",
+      "github_username": "fabiogracias1979-svg",
+      "profile_url": "https://github.com/fabiogracias1979-svg"
+    },
+    {
+      "name": "Fernando Aguilar",
+      "role": "Integrante",
+      "institution": "OPAMSS",
+      "github_username": null,
+      "profile_url": null
+    },
+    {
+      "name": "Tatiana Miranda",
+      "role": "Integrante",
+      "institution": "OPAMSS",
+      "github_username": null,
+      "profile_url": null
+    }
+  ],
   "data_sources": [
     {
       "title": "Sentinel-2 / óptico multiespectral",

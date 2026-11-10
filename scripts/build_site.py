@@ -545,6 +545,19 @@ def build_home_page(
             declared_only=demo_declared_only,
         )
 
+    team_members = manifest.get("team", [])
+    team_html = ""
+    if team_members:
+        members_spans = "".join(
+            f'<span class="badge badge-team" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;padding:0.35rem 0.75rem;border-radius:20px;font-size:0.9rem;font-weight:500;">👤 {esc(m["name"])}</span>'
+            for m in team_members
+        )
+        team_html = f"""
+        <div class="hero-team" style="display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;margin:0.25rem 0 1rem;">
+          <strong style="color:var(--c-accent-yellow,#ffd100);font-size:0.95rem;text-transform:uppercase;letter-spacing:0.5px;">Equipo Grupo AMSS:</strong>
+          {members_spans}
+        </div>"""
+
     hero = f"""
     <section class="hero">
       <div class="container">
@@ -554,6 +567,7 @@ def build_home_page(
           {badge_html(manifest['pmv']['scope_status'], 'Alcance PMV')}
         </div>
         <h1>{esc(manifest['title'])}</h1>
+        {team_html}
         <p class="hero-lead">{esc(manifest['summary'])}</p>
         <div class="hero-actions">
           <a class="btn btn-primary" href="{html.escape(ctx.site_url('aplicacion/'), quote=True)}">Abrir Geovisor (GeoLibre)</a>
@@ -1675,7 +1689,14 @@ def main() -> int:
         print("Error: --output no puede ser la raíz del repositorio.", file=sys.stderr)
         return 1
     if out_dir.exists():
-        shutil.rmtree(out_dir)
+        for item in list(out_dir.iterdir()):
+            try:
+                if item.is_dir():
+                    shutil.rmtree(item)
+                else:
+                    item.unlink()
+            except Exception:
+                pass
     out_dir.mkdir(parents=True, exist_ok=True)
 
     # Copiar recursos estáticos del tema común

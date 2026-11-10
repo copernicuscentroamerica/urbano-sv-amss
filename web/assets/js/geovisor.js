@@ -458,12 +458,28 @@
         var props = e.features[0].properties || {};
         var nameVal = props.nombre || props.name || props.NAM || defaultTitle;
         var rows = [];
-        Object.keys(props).forEach(function (k) {
-          if (k === "nombre" || k === "name") return;
-          if (props[k] !== null && props[k] !== undefined && String(props[k]).trim() !== "") {
-            rows.push([k, String(props[k])]);
-          }
-        });
+
+        var dpto = props.NOM_DPTO || props.nom_dpto || props.DEPARTAMENTO || props.departamento;
+        var mun = props.NOM_MUN || props.nom_mun || props.DISTRITO || props.distrito || props.MUNICIPIO || props.municipio;
+
+        if (dpto || mun) {
+          if (dpto) rows.push(["Departamento", String(dpto)]);
+          if (mun) rows.push(["(MUN) distrito", String(mun)]);
+        } else {
+          var ignoredKeys = {
+            f_code: true, f_code_des: true, cod_dpto: true, tipo_adm: true,
+            cod_mun: true, cod_mun4: true, reg_geo: true, reg_geo_de: true,
+            r_pnodt: true, r_pnodt_de: true, sr_pnodt: true, sr_pnodt_d: true,
+            shape_leng: true, shape_area: true, perim_km: true
+          };
+          Object.keys(props).forEach(function (k) {
+            if (k === "nombre" || k === "name") return;
+            if (ignoredKeys[k.toLowerCase()]) return;
+            if (props[k] !== null && props[k] !== undefined && String(props[k]).trim() !== "") {
+              rows.push([k, String(props[k])]);
+            }
+          });
+        }
         if (!rows.length) rows.push(["Estado", "Capa vectorial cargada"]);
         var dom = createSafePopupElement(String(nameVal), rows.slice(0, 8), badgeTitle);
         new window.maplibregl.Popup({ maxWidth: "320px" }).setLngLat(e.lngLat).setDOMContent(dom).addTo(mapInstance);

@@ -930,6 +930,19 @@ def build_aplicacion_page(
             f'target="_blank" rel="noopener noreferrer">Abrir geovisor/capas/ en GitHub ↗</a>'
         )
 
+    team_members = manifest.get("team", [])
+    team_html = ""
+    if team_members:
+        members_spans = "".join(
+            f'<span class="badge badge-team" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;padding:0.25rem 0.65rem;border-radius:20px;font-size:0.85rem;font-weight:500;">👤 {esc(m["name"])}</span>'
+            for m in team_members
+        )
+        team_html = f"""
+        <div class="hero-team" style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin:0.25rem 0 0.75rem;">
+          <strong style="color:var(--c-accent-yellow,#ffd100);font-size:0.88rem;text-transform:uppercase;letter-spacing:0.5px;">Equipo Grupo AMSS:</strong>
+          {members_spans}
+        </div>"""
+
     hero = f"""
     <section class="hero hero-compact">
       <div class="container">
@@ -939,6 +952,7 @@ def build_aplicacion_page(
           {badge_html(manifest['status']['demo'], 'Estado Demo')}
         </div>
         <h1>Geovisor del proyecto y espacio de integración de capas</h1>
+        {team_html}
         <p class="hero-lead">Visor integrado sobre MapLibre GL JS y proyecto exportable <code>geovisor/proyecto.geolibre.json</code> (v0.2.0) compatible con GeoLibre Studio.</p>
       </div>
     </section>
@@ -953,10 +967,16 @@ def build_aplicacion_page(
     )
     colaborar_logos_href = ctx.site_url("colaborar/") + "#anadir-actualizar-logos"
 
+    ref_note_extra = (
+        " Los límites administrativos procedentes de fuentes abiertas (OpenStreetMap ODbL) se muestran con carácter referencial hasta su homologación institucional."
+        if mv.get("is_referential", True)
+        else ""
+    )
+
     body = f"""
     <div class="callout" style="margin-top:0;margin-bottom:1rem;padding:0.75rem 1rem;">
       <strong>Nota de integridad cartográfica ({esc(mv.get('scale_label', 'Escala del perfil'))})</strong>
-      <span>{esc(mv.get('reference_note'))} Los límites administrativos procedentes de fuentes abiertas (OpenStreetMap ODbL) se muestran con carácter referencial hasta su homologación institucional.</span>
+      <span>{esc(mv.get('reference_note'))}{ref_note_extra}</span>
     </div>
 
     <section class="section" id="geovisor-app">

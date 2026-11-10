@@ -195,14 +195,7 @@
   },
   "team": [
     {
-      "name": "Fabio Gracias",
-      "role": "Integrante",
-      "institution": "OPAMSS",
-      "github_username": "fabiogracias1979-svg",
-      "profile_url": "https://github.com/fabiogracias1979-svg"
-    },
-    {
-      "name": "Fernando Aguilar",
+      "name": "Ana Viana",
       "role": "Integrante",
       "institution": "OPAMSS",
       "github_username": null,
@@ -214,6 +207,20 @@
       "institution": "OPAMSS",
       "github_username": null,
       "profile_url": null
+    },
+    {
+      "name": "Fernando Aguilar",
+      "role": "Integrante",
+      "institution": "OPAMSS",
+      "github_username": null,
+      "profile_url": null
+    },
+    {
+      "name": "Fabio Gracias",
+      "role": "Integrante",
+      "institution": "OPAMSS",
+      "github_username": "fabiogracias1979-svg",
+      "profile_url": "https://github.com/fabiogracias1979-svg"
     }
   ],
   "data_sources": [

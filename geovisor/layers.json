@@ -68,7 +68,7 @@
       "geometry_type": "polygon",
       "status": "en_preparacion",
       "source_path": null,
-      "expected_file_hint": "geovisor/data/amss_14_distritos.geojson",
+      "expected_file_hint": "geovisor/capas/amss_14_distritos.geojson",
       "resolution": "Vectorial oficial OPAMSS",
       "style": {
         "fill_color": "#14283F",
@@ -86,7 +86,7 @@
       "geometry_type": "polygon",
       "status": "en_preparacion",
       "source_path": null,
-      "expected_file_hint": "geovisor/data/amss_expansion_urbana.geojson",
+      "expected_file_hint": "geovisor/capas/amss_expansion_urbana.geojson",
       "resolution": "10 m (Sentinel-2)",
       "style": {
         "fill_color": "#007F8B",
@@ -104,7 +104,7 @@
       "geometry_type": "polygon",
       "status": "en_preparacion",
       "source_path": null,
-      "expected_file_hint": "geovisor/data/amss_rangos_valor_suelo.geojson",
+      "expected_file_hint": "geovisor/capas/amss_rangos_valor_suelo.geojson",
       "resolution": "Polígonos reclasificados con RMSE documentado",
       "style": {
         "fill_color": "#C9DA4D",
@@ -122,7 +122,7 @@
       "geometry_type": "polygon",
       "status": "en_preparacion",
       "source_path": null,
-      "expected_file_hint": "geovisor/data/amss_tipologias.geojson",
+      "expected_file_hint": "geovisor/capas/amss_tipologias.geojson",
       "resolution": "Agregación por distrito / UPD",
       "style": {
         "fill_color": "#e6ab02",

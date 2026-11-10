@@ -1,6 +1,6 @@
 ## Alcance técnico y metodológico declarado en el perfil
 
-Los siguientes campos reproducen la información de `S10`. Son declaraciones del perfil y no una comprobación de disponibilidad o vigencia.
+Los siguientes campos reproducen la información declarada por el equipo en el documento principal del perfil (identificado en el inventario documental como `S10`; consulta la lista completa de archivos al final de esta página). Representan la formulación técnica del perfil y se actualizan conforme avanza la validación del proyecto.
 
 ### Territorio y escala
 

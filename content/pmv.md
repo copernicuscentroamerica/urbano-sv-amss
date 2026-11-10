@@ -5,7 +5,7 @@
 
 ### Tareas originales de S11
 
-Fuente: `S11`. La clave de importación es propuesta; conserva la fila de origen. Prefijarla con `sv-amss:` al crear Issues. No sustituir por identificadores numéricos de GitHub hasta crearlas. Las horas vacías quedan sin estimar.
+Fuente documental: archivo de planificación `S11` (ver inventario en Metodología). Cada fila conserva su código de trazabilidad original para vincular las tareas con los Issues y el tablero de seguimiento.
 
 | Clave de importación | ID original | HU | Tarea | Prioridad | Rol | Horas estimadas | Estado declarado | Criterio original |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -30,7 +30,7 @@ Fuente: `S11`. La clave de importación es propuesta; conserva la fila de origen
 
 ## Especificación de módulos de aplicación
 
-Estos componentes constituyen una propuesta de interfaz basada en el perfil. La primera versión entrega una página de proyecto completa y espacios de integración. Activar un mapa, indicador, descarga o simulador únicamente cuando exista el dato o servicio correspondiente.
+Estos componentes describen el diseño funcional previsto para el visor y el tablero de la iniciativa. Los módulos e indicadores se habilitan de forma progresiva a medida que el equipo incorpora y valida cada conjunto de datos en el repositorio.
 
 - Mapa con selector temporal de huella urbana y rangos de valor del suelo.
 - Filtro por distrito y, cuando la capa esté disponible, unidad de planificación detallada UPD 2025.
@@ -40,4 +40,4 @@ Estos componentes constituyen una propuesta de interfaz basada en el perfil. La 
 
 ### Estados vacíos y navegación
 
-Cuando no haya resultado disponible, mostrar «Resultado pendiente» y explicar qué insumo falta. Conservar los datos faltantes como `null`; no dibujar geometrías inventadas, rellenar indicadores con cero ni presentar gráficos de ejemplo como mediciones. El botón de fork/clonación apunta al repositorio canónico verificado, no al repositorio general del portal.
+Para garantizar la transparencia técnica, las capas e indicadores en preparación se identifican explícitamente como pendientes hasta contar con datos verificados, evitando sustituir mediciones faltantes con valores simulados. Todos los enlaces de colaboración de esta página conectan directamente con el repositorio oficial de la iniciativa.

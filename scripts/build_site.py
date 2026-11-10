@@ -24,8 +24,10 @@ from site_common import (
     compute_site_context,
     esc,
     format_spanish_date,
+    render_hero_team,
     render_project_institutions_band,
     render_regional_institutional_band,
+    render_team_section_html,
     render_upper_institutional_bar,
 )
 
@@ -160,7 +162,7 @@ def render_shell(
         )
         maplibre_scripts = (
             '<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js" crossorigin="anonymous"></script>\n'
-            f'  <script src="{html.escape(ctx.site_url("assets/js/geovisor.js"), quote=True)}?v=2.0.2"></script>'
+            f'  <script src="{html.escape(ctx.site_url("assets/js/geovisor.js"), quote=True)}?v=2.0.3"></script>'
         )
 
     updated_raw = manifest["governance"].get("content_updated_at")
@@ -174,7 +176,7 @@ def render_shell(
   <title>{esc(page_title)} · {esc(short_title)}</title>
   <meta name="description" content="{esc(manifest['summary'])}">
   {robots_meta}
-  <link rel="stylesheet" href="{html.escape(ctx.site_url('assets/css/styles.css'), quote=True)}?v=2.0.2">
+  <link rel="stylesheet" href="{html.escape(ctx.site_url('assets/css/styles.css'), quote=True)}?v=2.0.3">
   {maplibre_head}
 </head>
 <body>
@@ -234,7 +236,7 @@ def render_shell(
     </div>
   </footer>
 
-  <script src="{html.escape(ctx.site_url('assets/js/ui.js'), quote=True)}?v=2.0.2"></script>
+  <script src="{html.escape(ctx.site_url('assets/js/ui.js'), quote=True)}?v=2.0.3"></script>
   {maplibre_scripts}
 </body>
 </html>
@@ -554,6 +556,7 @@ def build_home_page(
           {badge_html(manifest['pmv']['scope_status'], 'Alcance PMV')}
         </div>
         <h1>{esc(manifest['title'])}</h1>
+        {render_hero_team(manifest)}
         <p class="hero-lead">{esc(manifest['summary'])}</p>
         <div class="hero-actions">
           <a class="btn btn-primary" href="{html.escape(ctx.site_url('aplicacion/'), quote=True)}">Abrir Geovisor (GeoLibre)</a>
@@ -625,6 +628,8 @@ def build_home_page(
         </article>
       </div>
     </section>
+
+    {render_team_section_html(manifest)}
 
     <section class="section">
       <div class="grid-2">
@@ -727,6 +732,37 @@ def build_proyecto_page(
     support_url = f"{repo_url}/issues/new?template=02-bloqueo-apoyo.yml" if repo_url else ctx.site_url("colaborar/")
     colaborar_logos_href = ctx.site_url("colaborar/") + "#anadir-actualizar-logos"
 
+    figuras_dir = ROOT / "web" / "assets" / "img" / "figuras"
+    figuras_html = ""
+    if figuras_dir.is_dir():
+        fig_files = sorted(
+            f for f in figuras_dir.iterdir()
+            if f.is_file() and f.suffix.lower() in (".png", ".jpg", ".jpeg", ".svg", ".webp")
+        )
+        if fig_files:
+            fig_cards = []
+            for ff in fig_files:
+                f_url = html.escape(ctx.site_url(f"assets/img/figuras/{ff.name}"), quote=True)
+                f_label = esc(ff.stem.replace("_", " ").capitalize())
+                fig_cards.append(
+                    f"""
+                    <article class="card">
+                      <span class="badge badge-ok">Evidencia gráfica del repositorio</span>
+                      <h3 style="margin:0.35rem 0 0.5rem;font-size:1rem;">{f_label}</h3>
+                      <a href="{f_url}" target="_blank" rel="noopener noreferrer" style="display:block;border:1px solid var(--c-border);border-radius:8px;overflow:hidden;background:#070A14;">
+                        <img src="{f_url}" alt="{f_label}" style="width:100%;height:auto;display:block;" loading="lazy">
+                      </a>
+                    </article>
+                    """
+                )
+            figuras_html = f"""
+            <section class="section">
+              <h2>Figuras y visualizaciones analíticas incorporadas por el equipo</h2>
+              <p>Gráficos y salidas analíticas generadas a partir de los scripts del proyecto en <code>src/</code> y almacenadas en <code>web/assets/img/figuras/</code>:</p>
+              <div class="grid-2">{"".join(fig_cards)}</div>
+            </section>
+            """
+
     hero = f"""
     <section class="hero">
       <div class="container">
@@ -735,10 +771,13 @@ def build_proyecto_page(
           <span class="badge badge-country">{esc(manifest['id'])}</span>
         </div>
         <h1>{esc(manifest['title'])}</h1>
+        {render_hero_team(manifest)}
         <p class="hero-lead">Alcance territorial en {esc(manifest['territory']['label'])}, criterios del PMV, instituciones participantes y trazabilidad documental desde <code>project.json</code>.</p>
       </div>
     </section>
     """
+
+    team_names_str = ", ".join(m.get("name", "") for m in (manifest.get("team") or []) if isinstance(m, dict) and m.get("name")) or "Por confirmar"
 
     body = f"""
     {render_status_strip(manifest)}
@@ -749,6 +788,7 @@ def build_proyecto_page(
         <div class="grid-3">
           <div>
             <p><strong>Instituciones participantes:</strong><br>{esc(", ".join(manifest["institutional_use"].get("institutions", [])), "Por confirmar")}</p>
+            <p><strong>Integrantes del equipo:</strong><br>{esc(team_names_str)}</p>
             <p><strong>Responsabilidad funcional:</strong><br>Equipo técnico de la iniciativa ({esc(manifest['country']['name'])}) · Coordinación regional del Clúster Urbano.</p>
           </div>
           <div>
@@ -1115,6 +1155,37 @@ def build_metodologia_page(
     lim_li = "".join(f"<li>{esc(l)}</li>" for l in manifest.get("limitations", [])) or "<li>Sin limitaciones adicionales registradas.</li>"
     colaborar_logos_href = ctx.site_url("colaborar/") + "#anadir-actualizar-logos"
 
+    figuras_dir = ROOT / "web" / "assets" / "img" / "figuras"
+    figuras_html = ""
+    if figuras_dir.is_dir():
+        fig_files = sorted(
+            f for f in figuras_dir.iterdir()
+            if f.is_file() and f.suffix.lower() in (".png", ".jpg", ".jpeg", ".svg", ".webp")
+        )
+        if fig_files:
+            fig_cards = []
+            for ff in fig_files:
+                f_url = html.escape(ctx.site_url(f"assets/img/figuras/{ff.name}"), quote=True)
+                f_label = esc(ff.stem.replace("_", " ").capitalize())
+                fig_cards.append(
+                    f"""
+                    <article class="card">
+                      <span class="badge badge-ok">Evidencia gráfica del repositorio</span>
+                      <h3 style="margin:0.35rem 0 0.5rem;font-size:1rem;">{f_label}</h3>
+                      <a href="{f_url}" target="_blank" rel="noopener noreferrer" style="display:block;border:1px solid var(--c-border);border-radius:8px;overflow:hidden;background:#070A14;">
+                        <img src="{f_url}" alt="{f_label}" style="width:100%;height:auto;display:block;" loading="lazy">
+                      </a>
+                    </article>
+                    """
+                )
+            figuras_html = f"""
+            <section class="section">
+              <h2>Figuras y visualizaciones analíticas incorporadas por el equipo</h2>
+              <p>Gráficos y salidas analíticas generadas a partir de los scripts del proyecto en <code>src/</code> y almacenadas en <code>web/assets/img/figuras/</code>:</p>
+              <div class="grid-2">{"".join(fig_cards)}</div>
+            </section>
+            """
+
     hero = f"""
     <section class="hero">
       <div class="container">
@@ -1210,6 +1281,37 @@ def build_resultados_page(
 
     colaborar_logos_href = ctx.site_url("colaborar/") + "#anadir-actualizar-logos"
 
+    figuras_dir = ROOT / "web" / "assets" / "img" / "figuras"
+    figuras_html = ""
+    if figuras_dir.is_dir():
+        fig_files = sorted(
+            f for f in figuras_dir.iterdir()
+            if f.is_file() and f.suffix.lower() in (".png", ".jpg", ".jpeg", ".svg", ".webp")
+        )
+        if fig_files:
+            fig_cards = []
+            for ff in fig_files:
+                f_url = html.escape(ctx.site_url(f"assets/img/figuras/{ff.name}"), quote=True)
+                f_label = esc(ff.stem.replace("_", " ").capitalize())
+                fig_cards.append(
+                    f"""
+                    <article class="card">
+                      <span class="badge badge-ok">Evidencia gráfica del repositorio</span>
+                      <h3 style="margin:0.35rem 0 0.5rem;font-size:1rem;">{f_label}</h3>
+                      <a href="{f_url}" target="_blank" rel="noopener noreferrer" style="display:block;border:1px solid var(--c-border);border-radius:8px;overflow:hidden;background:#070A14;">
+                        <img src="{f_url}" alt="{f_label}" style="width:100%;height:auto;display:block;" loading="lazy">
+                      </a>
+                    </article>
+                    """
+                )
+            figuras_html = f"""
+            <section class="section">
+              <h2>Figuras y visualizaciones analíticas incorporadas por el equipo</h2>
+              <p>Gráficos y salidas analíticas generadas a partir de los scripts del proyecto en <code>src/</code> y almacenadas en <code>web/assets/img/figuras/</code>:</p>
+              <div class="grid-2">{"".join(fig_cards)}</div>
+            </section>
+            """
+
     hero = f"""
     <section class="hero">
       <div class="container">
@@ -1249,6 +1351,8 @@ def build_resultados_page(
       <p>Metadatos estructurados en <code>atlas/products/</code> conforme a <code>atlas-product.schema.json</code>:</p>
       {"".join(atlas_cards) if atlas_cards else "<p>Sin fichas de Atlas registradas todavía.</p>"}
     </section>
+
+    {figuras_html}
 
     <section class="section">
       <div class="prose">

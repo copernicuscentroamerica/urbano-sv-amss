@@ -16,8 +16,8 @@
       -89.31432,
       13.61892
     ],
-    "is_referential": true,
-    "reference_note": "Centroide declarado en formulario S10: 13.61892, -89.31432 (14 distritos del AMSS, ≈ 165.107 ha). Perímetro vectorial Perimetro_AMSS-14_26_13.zip pendiente de incorporación.",
+    "is_referential": false,
+    "reference_note": "Límites y perímetro oficial de distritos y nuevos municipios del AMSS incorporados.",
     "area_declared": "165.107 ha (≈ 1.651 km²) en 14 distritos del AMSS según S10.",
     "scale_label": "Área urbana metropolitana / conurbación (14 distritos)"
   },
@@ -43,40 +43,40 @@
   ],
   "layers": [
     {
-      "id": "sv-amss-14-distritos-osm",
-      "title": "Límite referencial de los 14 distritos del AMSS (OSM ODbL)",
+      "id": "sv-amss-perimetro-distritos",
+      "title": "Límite oficial de los distritos del AMSS y nuevos municipios",
       "group": "Ámbito metropolitano",
       "format": "geojson",
       "geometry_type": "polygon",
-      "status": "en_revision",
-      "source_path": "geovisor/capas/amss_14_distritos_osm.geojson",
-      "expected_file_hint": "geovisor/capas/amss_14_distritos_osm.geojson",
-      "resolution": "Vectorial distrital referencial (14 distritos, EPSG:4326)",
+      "status": "publicado",
+      "source_path": "geovisor/capas/amss_14_distritos.geojson",
+      "expected_file_hint": "geovisor/capas/amss_14_distritos.geojson",
+      "resolution": "Vectorial oficial OPAMSS (EPSG:4326)",
       "style": {
         "fill_color": "#007F8B",
-        "fill_opacity": 0.16,
-        "stroke_color": "#14283F",
-        "stroke_width": 2.0
-      },
-      "caveat": "Fuente externa abierta: OpenStreetMap contributors (ODbL). Carácter referencial hasta incorporar Perimetro_AMSS-14_26_13.zip y UPD 2025 oficiales de OPAMSS."
-    },
-    {
-      "id": "sv-amss-perimetro-distritos",
-      "title": "Límite oficial de los 14 distritos del AMSS y UPD 2025",
-      "group": "Ámbito metropolitano",
-      "format": "geojson",
-      "geometry_type": "polygon",
-      "status": "en_preparacion",
-      "source_path": null,
-      "expected_file_hint": "geovisor/capas/amss_14_distritos.geojson",
-      "resolution": "Vectorial oficial OPAMSS",
-      "style": {
-        "fill_color": "#14283F",
-        "fill_opacity": 0.08,
+        "fill_opacity": 0.2,
         "stroke_color": "#14283F",
         "stroke_width": 2
       },
-      "caveat": "Requiere incorporar el perímetro oficial homologado de los 14 distritos."
+      "caveat": "Capa oficial de distritos y nuevos municipios del AMSS (incorporada desde nuevos_municipios_amss)."
+    },
+    {
+      "id": "sv-amss-perimetro-metropolitano",
+      "title": "Perímetro metropolitano del AMSS",
+      "group": "Ámbito metropolitano",
+      "format": "geojson",
+      "geometry_type": "polygon",
+      "status": "publicado",
+      "source_path": "geovisor/capas/amss_perimetro.geojson",
+      "expected_file_hint": "geovisor/capas/amss_perimetro.geojson",
+      "resolution": "Vectorial oficial OPAMSS (EPSG:4326)",
+      "style": {
+        "fill_color": "#14283F",
+        "fill_opacity": 0.05,
+        "stroke_color": "#C9DA4D",
+        "stroke_width": 2.5
+      },
+      "caveat": "Perímetro exterior de los nuevos municipios del AMSS."
     },
     {
       "id": "sv-amss-expansion-urbana",

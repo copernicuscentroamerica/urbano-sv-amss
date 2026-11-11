@@ -1020,7 +1020,7 @@ def build_aplicacion_page(
               <summary style="cursor:pointer;font-weight:700;color:var(--c-brand-blue);">🛰️ Conectar Copernicus Data Space (CDSE) / WMS / XYZ</summary>
               <div style="display:flex;flex-direction:column;gap:0.45rem;margin-top:0.55rem;">
                 <p style="margin:0;font-size:0.76rem;color:var(--c-text-muted);">Ingresa tu <strong>Instance ID</strong> de <a href="https://shapps.dataspace.copernicus.eu/dashboard/#/configurations" target="_blank" rel="noopener noreferrer">CDSE Sentinel Hub ↗</a> o pega cualquier URL de teselas <code>WMS / WMTS / XYZ</code>:</p>
-                <input id="gv-cdse-instance-or-url" type="text" placeholder="Instance ID (UUID) o URL https://.../{z}/{y}/{x}" style="padding:0.35rem 0.5rem;border:1px solid var(--c-border-strong);border-radius:4px;font-size:0.78rem;">
+                <input id="gv-cdse-instance-or-url" type="text" placeholder="Instance ID (UUID) o URL https://.../{{z}}/{{y}}/{{x}}" style="padding:0.35rem 0.5rem;border:1px solid var(--c-border-strong);border-radius:4px;font-size:0.78rem;">
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;">
                   <select id="gv-cdse-layer" style="padding:0.35rem;border:1px solid var(--c-border-strong);border-radius:4px;font-size:0.76rem;" title="Capa configurada en tu instancia CDSE">
                     <option value="TRUE-COLOR-S2L2A">TRUE-COLOR-S2L2A (Color real)</option>

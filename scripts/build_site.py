@@ -996,16 +996,18 @@ def build_aplicacion_page(
           </div>
 
           <div class="geovisor-panel is-active" data-gv-panel="layers">
-            <div class="filter-field" style="margin-bottom:0.65rem;">
-              <label for="gv-basemap-select">Mapa base de referencia y mosaicos Sentinel-2</label>
+            <div class="filter-field" style="margin-bottom:0.5rem;">
+              <label for="gv-basemap-select">Mapa base y Mosaicos Abiertos Copernicus Sentinel-2 / DEM</label>
               <select id="gv-basemap-select">
-                <optgroup label="Mosaicos Satelitales Copernicus Sentinel-2 (Abiertos)">
+                <optgroup label="Mosaicos Abiertos Copernicus Sentinel-2 Cloudless y DEM (Sin API Key)">
                   <option value="sentinel2-2024">Copernicus Sentinel-2 Cloudless (Mosaico 2024 · EOX)</option>
                   <option value="sentinel2-2023">Copernicus Sentinel-2 Cloudless (Mosaico 2023 · EOX)</option>
+                  <option value="sentinel2-2022">Copernicus Sentinel-2 Cloudless (Mosaico 2022 · EOX)</option>
                   <option value="sentinel2-2021">Copernicus Sentinel-2 Cloudless (Mosaico 2021 · EOX)</option>
                   <option value="sentinel2-2020">Copernicus Sentinel-2 Cloudless (Mosaico 2020 · EOX)</option>
+                  <option value="sentinel2-2019">Copernicus Sentinel-2 Cloudless (Mosaico 2019 · EOX)</option>
                   <option value="sentinel2-2018">Copernicus Sentinel-2 Cloudless (Mosaico 2018 · EOX)</option>
-                  <option value="copernicus-terrain">Relieve y Topografía (Terrain Light · DEM)</option>
+                  <option value="copernicus-terrain">Relieve y Topografía Copernicus DEM (Terrain Light)</option>
                 </optgroup>
                 <optgroup label="Mapas Base Vectoriales y Referencia">
                   <option value="carto-positron" selected>Mapa Claro Vectorial (OpenFreeMap)</option>
@@ -1016,29 +1018,17 @@ def build_aplicacion_page(
               </select>
             </div>
 
-            <details style="margin-bottom:0.75rem;background:#F3F6FD;border:1px solid var(--c-border);border-radius:6px;padding:0.5rem 0.65rem;font-size:0.8rem;">
-              <summary style="cursor:pointer;font-weight:700;color:var(--c-brand-blue);">🛰️ Conectar Copernicus Data Space (CDSE) / WMS / XYZ</summary>
-              <div style="display:flex;flex-direction:column;gap:0.45rem;margin-top:0.55rem;">
-                <p style="margin:0;font-size:0.76rem;color:var(--c-text-muted);">Ingresa tu <strong>Instance ID</strong> de <a href="https://shapps.dataspace.copernicus.eu/dashboard/#/configurations" target="_blank" rel="noopener noreferrer">CDSE Sentinel Hub ↗</a> o pega cualquier URL de teselas <code>WMS / WMTS / XYZ</code>:</p>
-                <input id="gv-cdse-instance-or-url" type="text" placeholder="Instance ID (UUID) o URL https://.../{{z}}/{{y}}/{{x}}" style="padding:0.35rem 0.5rem;border:1px solid var(--c-border-strong);border-radius:4px;font-size:0.78rem;">
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;">
-                  <select id="gv-cdse-layer" style="padding:0.35rem;border:1px solid var(--c-border-strong);border-radius:4px;font-size:0.76rem;" title="Capa configurada en tu instancia CDSE">
-                    <option value="TRUE-COLOR-S2L2A">TRUE-COLOR-S2L2A (Color real)</option>
-                    <option value="FALSE-COLOR">FALSE-COLOR (Infrarrojo)</option>
-                    <option value="NDVI">NDVI (Vegetación)</option>
-                    <option value="NDBI">NDBI (Área construida)</option>
-                    <option value="MOISTURE-INDEX">MOISTURE-INDEX (Humedad)</option>
-                    <option value="S1-VV-VH">Sentinel-1 SAR (VV/VH)</option>
-                  </select>
-                  <input id="gv-cdse-date" type="date" value="2026-11-10" style="padding:0.3rem 0.4rem;border:1px solid var(--c-border-strong);border-radius:4px;font-size:0.76rem;" title="Fecha máxima de escena Sentinel">
-                </div>
-                <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.15rem;">
-                  <button type="button" id="gv-apply-cdse-btn" class="btn btn-teal btn-xs" style="flex:1;">Aplicar mapa base CDSE / WMS</button>
-                  <a id="gv-open-cdse-browser" class="btn btn-outline btn-xs" href="https://browser.dataspace.copernicus.eu/" target="_blank" rel="noopener noreferrer" title="Abrir Copernicus Browser centrado en este proyecto">Copernicus Browser ↗</a>
-                </div>
-                <p id="gv-cdse-status" style="margin:0;font-size:0.74rem;color:var(--c-brand-blue);font-weight:600;"></p>
+            <div style="margin-bottom:0.75rem;background:#F3F6FD;border:1px solid var(--c-border);border-radius:6px;padding:0.5rem 0.6rem;">
+              <div style="font-size:0.74rem;font-weight:700;color:var(--c-brand-blue);margin-bottom:0.38rem;">🛰️ Acceso rápido multitemporal Sentinel-2 Cloudless / DEM:</div>
+              <div style="display:flex;flex-wrap:wrap;gap:0.32rem;">
+                <button type="button" class="btn btn-outline btn-xs" data-basemap-quick="sentinel2-2024" title="Mosaico anual abierto Copernicus Sentinel-2 Cloudless 2024">S2 · 2024</button>
+                <button type="button" class="btn btn-outline btn-xs" data-basemap-quick="sentinel2-2022" title="Mosaico anual abierto Copernicus Sentinel-2 Cloudless 2022">S2 · 2022</button>
+                <button type="button" class="btn btn-outline btn-xs" data-basemap-quick="sentinel2-2020" title="Mosaico anual abierto Copernicus Sentinel-2 Cloudless 2020">S2 · 2020</button>
+                <button type="button" class="btn btn-outline btn-xs" data-basemap-quick="sentinel2-2018" title="Mosaico anual abierto Copernicus Sentinel-2 Cloudless 2018">S2 · 2018</button>
+                <button type="button" class="btn btn-outline btn-xs" data-basemap-quick="copernicus-terrain" title="Modelo de Relieve y Topografía Copernicus DEM">⛰️ Relieve DEM</button>
+                <button type="button" class="btn btn-teal btn-xs" data-basemap-quick="carto-positron" title="Mapa Claro Vectorial de Referencia">🗺️ Vectorial</button>
               </div>
-            </details>
+            </div>
 
             <label style="display:flex;align-items:center;gap:0.45rem;font-size:0.83rem;font-weight:600;margin-bottom:0.6rem;">
               <input type="checkbox" id="gv-toggle-ref-marker" checked>

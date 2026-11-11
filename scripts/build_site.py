@@ -1614,11 +1614,13 @@ def render_copernicus_study_area_atlas_section(
               <button type="button" id="atlas-toggle-fullscreen" class="btn btn-primary btn-xs">⛶ Pantalla completa</button>
             </div>
           </div>
-          <div id="atlas-map-year-badge" class="atlas-map-year-badge" aria-live="polite">
-            <span id="atlas-map-year-top" class="atlas-map-year-badge-top">SERIE MULTITEMPORAL (7/7)</span>
-            <span id="atlas-map-year-main" class="atlas-map-year-badge-main">2024</span>
+          <div class="atlas-map-stage">
+            <div id="atlas-map-year-badge" class="atlas-map-year-badge" aria-live="polite">
+              <span id="atlas-map-year-top" class="atlas-map-year-badge-top">SERIE MULTITEMPORAL (7/7)</span>
+              <span id="atlas-map-year-main" class="atlas-map-year-badge-main">2024</span>
+            </div>
+            <div id="atlas-copernicus-map" class="atlas-copernicus-canvas" data-center="{center_attr}" data-zoom="{initial_zoom}" role="region" aria-label="Mapa del Atlas Temático Copernicus enmascarado con la zona de estudio"></div>
           </div>
-          <div id="atlas-copernicus-map" class="atlas-copernicus-canvas" data-center="{center_attr}" data-zoom="{initial_zoom}" role="region" aria-label="Mapa del Atlas Temático Copernicus enmascarado con la zona de estudio"></div>
         </div>
 
         <div class="atlas-copernicus-info-col" id="atlas-plate-detail">

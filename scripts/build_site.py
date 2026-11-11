@@ -1598,12 +1598,12 @@ def render_copernicus_study_area_atlas_section(
         <div class="atlas-pdf-banner-inner">
           <div class="atlas-pdf-banner-text">
             <span class="atlas-pdf-banner-eyebrow">📘 Edición Editorial A4 Horizontal · Identidad Institucional 2.0.0-copernicus-2026</span>
-            <h3 class="atlas-pdf-banner-title">Documento Oficial del Atlas Temático Copernicus para Descargar en PDF</h3>
-            <p class="atlas-pdf-banner-desc">Incluye portada institucional con trama cartográfica y logos oficiales (Global Gateway, Unión Europea, CCVAH, SISCA, SICA, Cooperación Alemana, GIZ, Copernicus LAC Chile e instituciones participantes), índice técnico y las <strong>10 láminas cartográficas a página completa</strong> con el recorte de <strong>{esc(territory_label)}</strong> y sus tablas de leyendas cromáticas.</p>
+            <h3 class="atlas-pdf-banner-title">Documento Oficial del Atlas Temático Copernicus para Descargar en PDF ({esc(territory_label)})</h3>
+            <p class="atlas-pdf-banner-desc">Incluye portada institucional con trama cartográfica y logos oficiales, ficha técnica e índice, las <strong>10 láminas temáticas principales</strong> y las <strong>páginas de series multitemporales completas con todos los años y modos (2017–2024)</strong> recortadas con el límite de <strong>{esc(territory_label)}</strong> y sus leyendas cromáticas hexadecimales.</p>
           </div>
           <div class="atlas-pdf-banner-actions">
-            <a class="btn btn-primary" href="{pdf_href}" download="{esc(pdf_dl_name)}">📥 Descargar Atlas Institucional (PDF · 12 Págs.)</a>
-            <button type="button" class="btn btn-outline-light" data-atlas-export-pdf>🖨️ Exportar lámina / año actual a PDF</button>
+            <a class="btn btn-primary" href="{pdf_href}" download="{esc(pdf_dl_name)}">📥 Descargar Atlas Institucional Completo (PDF · 22 Págs. · 60 capas)</a>
+            <button type="button" class="btn btn-teal" data-atlas-export-pdf>🖨️ Exportar lámina / año actual a PDF</button>
             <a class="btn btn-outline-light btn-xs" href="{pdf_href}" target="_blank" rel="noopener noreferrer">Abrir PDF en pestaña ↗</a>
           </div>
         </div>
@@ -1633,7 +1633,7 @@ def render_copernicus_study_area_atlas_section(
               </label>
             </div>
             <div class="geovisor-toolbar-actions">
-              <a class="btn btn-primary btn-xs" href="{pdf_href}" download="{esc(pdf_dl_name)}" title="Descargar el Atlas completo de 12 páginas en PDF">📥 Descargar Atlas PDF</a>
+              <a class="btn btn-primary btn-xs" href="{pdf_href}" download="{esc(pdf_dl_name)}" title="Descargar el Atlas completo (10 láminas + series multitemporales) en PDF">📥 Descargar Atlas PDF</a>
               <button type="button" class="btn btn-outline-light btn-xs" data-atlas-export-pdf title="Exportar la lámina y año actuales en formato A4 Horizontal institucional">🖨️ Lámina a PDF</button>
               <button type="button" id="atlas-fit-bounds" class="btn btn-outline-light btn-xs">Encuadrar límite</button>
               <button type="button" id="atlas-toggle-fullscreen" class="btn btn-outline-light btn-xs">⛶ Pantalla completa</button>

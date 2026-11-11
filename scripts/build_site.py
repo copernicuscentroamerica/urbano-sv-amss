@@ -997,14 +997,36 @@ def build_aplicacion_page(
 
           <div class="geovisor-panel is-active" data-gv-panel="layers">
             <div class="filter-field" style="margin-bottom:0.5rem;">
-              <label for="gv-basemap-select">Mapa base y Mosaicos Abiertos Copernicus Sentinel-2 / DEM GLO-30</label>
+              <label for="gv-basemap-select">Catálogo de Mapas Base Copernicus y Derivados (23 capas abiertas)</label>
               <select id="gv-basemap-select">
-                <optgroup label="Modelo Digital de Elevación Oficial Copernicus DEM (GLO-30 · 30 m)">
+                <optgroup label="1. Modelo Digital de Elevación Oficial Copernicus DEM (GLO-30 · 30 m)">
                   <option value="copernicus-dem-glo30">Copernicus DEM GLO-30 (30 m · Elevación Hipsométrica + Sombreado)</option>
                   <option value="copernicus-dem-hillshade">Copernicus DEM GLO-30 (30 m · Sombreado de Relieve / Hillshade)</option>
                   <option value="copernicus-dem-viridis">Copernicus DEM GLO-30 (30 m · Hipsometría Viridis + Curvas de Nivel)</option>
                 </optgroup>
-                <optgroup label="Mosaicos Abiertos Copernicus Sentinel-2 Cloudless (Sin API Key)">
+                <optgroup label="2. Cobertura Terrestre y Mancha Urbana 10 m (Sentinel-1 + Sentinel-2)">
+                  <option value="esa-worldcover-2021">ESA WorldCover 10 m (2021 v200 · Mancha Urbana y Cobertura)</option>
+                  <option value="esa-worldcover-2020">ESA WorldCover 10 m (2020 v100 · Mancha Urbana y Cobertura)</option>
+                  <option value="s2-lulc-2023">Uso y Cobertura del Suelo Sentinel-2 10 m (Año 2023 · 9 clases)</option>
+                  <option value="s2-lulc-2020">Uso y Cobertura del Suelo Sentinel-2 10 m (Año 2020 · 9 clases)</option>
+                  <option value="s2-lulc-2017">Uso y Cobertura del Suelo Sentinel-2 10 m (Año 2017 · Línea base)</option>
+                </optgroup>
+                <optgroup label="3. Índices Espectrales y Bandas Copernicus Sentinel-2 L2A (10 m / 20 m)">
+                  <option value="s2-l2a-ndvi">Sentinel-2 L2A · Índice de Vegetación Urbana (NDVI · 10 m)</option>
+                  <option value="s2-l2a-ndbi">Sentinel-2 L2A · Índice de Edificación / Área Construida (NDBI · 20 m)</option>
+                  <option value="s2-l2a-ndwi">Sentinel-2 L2A · Índice de Humedad Superficial (NDWI · 20 m)</option>
+                  <option value="s2-l2a-falsecolor">Sentinel-2 L2A · Falso Color Infrarrojo (B08-B04-B03 · 10 m)</option>
+                  <option value="s2-l2a-swir">Sentinel-2 L2A · SWIR Urbano (B12-B8A-B04 · 20 m)</option>
+                </optgroup>
+                <optgroup label="4. Radar de Apertura Sintética Copernicus Sentinel-1 SAR RTC (10 m · Sin Nubes)">
+                  <option value="s1-rtc-falsecolor">Copernicus Sentinel-1 SAR RTC (10 m · Compuesto Urbano VV+VH)</option>
+                  <option value="s1-rtc-vv">Copernicus Sentinel-1 SAR RTC (10 m · Polarización VV Escala de Grises)</option>
+                </optgroup>
+                <optgroup label="5. Agua Superficial e Inundaciones (JRC Comisión Europea / Copernicus)">
+                  <option value="jrc-gsw-occurrence">JRC Agua Superficial · Ocurrencia Histórica e Inundación (1984–2021)</option>
+                  <option value="jrc-gsw-extent">JRC Agua Superficial · Extensión Máxima de Agua / Inundación</option>
+                </optgroup>
+                <optgroup label="6. Mosaicos Anuales Ópticos Copernicus Sentinel-2 Cloudless (2018–2024)">
                   <option value="sentinel2-2024">Copernicus Sentinel-2 Cloudless (Mosaico 2024 · EOX)</option>
                   <option value="sentinel2-2023">Copernicus Sentinel-2 Cloudless (Mosaico 2023 · EOX)</option>
                   <option value="sentinel2-2022">Copernicus Sentinel-2 Cloudless (Mosaico 2022 · EOX)</option>
@@ -1013,7 +1035,7 @@ def build_aplicacion_page(
                   <option value="sentinel2-2019">Copernicus Sentinel-2 Cloudless (Mosaico 2019 · EOX)</option>
                   <option value="sentinel2-2018">Copernicus Sentinel-2 Cloudless (Mosaico 2018 · EOX)</option>
                 </optgroup>
-                <optgroup label="Mapas Base Vectoriales y Referencia">
+                <optgroup label="7. Mapas Base Vectoriales y Referencia Cartográfica">
                   <option value="carto-positron" selected>Mapa Claro Vectorial (OpenFreeMap)</option>
                   <option value="osm-standard">OpenStreetMap Estándar</option>
                   <option value="carto-dark">Modo Oscuro Vectorial (OpenFreeMap)</option>
@@ -1023,15 +1045,22 @@ def build_aplicacion_page(
             </div>
 
             <div style="margin-bottom:0.75rem;background:#F3F6FD;border:1px solid var(--c-border);border-radius:6px;padding:0.5rem 0.6rem;">
-              <div style="font-size:0.74rem;font-weight:700;color:var(--c-brand-blue);margin-bottom:0.38rem;">🛰️ Acceso rápido Copernicus Sentinel-2 / DEM GLO-30 (30 m):</div>
-              <div style="display:flex;flex-wrap:wrap;gap:0.32rem;">
-                <button type="button" class="btn btn-outline btn-xs" data-basemap-quick="copernicus-dem-glo30" title="Copernicus DEM GLO-30 (30 m · Elevación Hipsométrica + Sombreado)">⛰️ DEM GLO-30 (30m)</button>
-                <button type="button" class="btn btn-outline btn-xs" data-basemap-quick="copernicus-dem-hillshade" title="Copernicus DEM GLO-30 (30 m · Sombreado de Relieve Puro / Hillshade)">⛰️ Hillshade 30m</button>
-                <button type="button" class="btn btn-outline btn-xs" data-basemap-quick="sentinel2-2024" title="Mosaico anual abierto Copernicus Sentinel-2 Cloudless 2024">S2 · 2024</button>
-                <button type="button" class="btn btn-outline btn-xs" data-basemap-quick="sentinel2-2022" title="Mosaico anual abierto Copernicus Sentinel-2 Cloudless 2022">S2 · 2022</button>
-                <button type="button" class="btn btn-outline btn-xs" data-basemap-quick="sentinel2-2020" title="Mosaico anual abierto Copernicus Sentinel-2 Cloudless 2020">S2 · 2020</button>
-                <button type="button" class="btn btn-outline btn-xs" data-basemap-quick="sentinel2-2018" title="Mosaico anual abierto Copernicus Sentinel-2 Cloudless 2018">S2 · 2018</button>
+              <div style="font-size:0.74rem;font-weight:700;color:var(--c-brand-blue);margin-bottom:0.38rem;">🛰️ Acceso directo por familia Copernicus (Sin API Key):</div>
+              <div style="display:flex;flex-wrap:wrap;gap:0.3rem;">
+                <button type="button" class="btn btn-outline btn-xs" data-basemap-quick="copernicus-dem-glo30" title="Copernicus DEM GLO-30 (30 m · Elevación Hipsométrica + Sombreado)">⛰️ DEM GLO-30</button>
+                <button type="button" class="btn btn-outline btn-xs" data-basemap-quick="copernicus-dem-hillshade" title="Copernicus DEM GLO-30 (30 m · Sombreado de Relieve / Hillshade)">⛰️ Hillshade</button>
+                <button type="button" class="btn btn-outline btn-xs" data-basemap-quick="esa-worldcover-2021" title="ESA WorldCover 10 m (Mancha urbana y cobertura derivada de Sentinel-1 y Sentinel-2)">🏙️ WorldCover 10m</button>
+                <button type="button" class="btn btn-outline btn-xs" data-basemap-quick="s2-lulc-2023" title="Uso y Cobertura del Suelo Sentinel-2 10 m (2023)">🏙️ LULC 2023</button>
+                <button type="button" class="btn btn-outline btn-xs" data-basemap-quick="s2-l2a-ndvi" title="Sentinel-2 L2A Índice de Vegetación Urbana (NDVI · 10 m)">🌿 NDVI</button>
+                <button type="button" class="btn btn-outline btn-xs" data-basemap-quick="s2-l2a-ndbi" title="Sentinel-2 L2A Índice de Edificación / Área Construida (NDBI · 20 m)">🏗️ NDBI</button>
+                <button type="button" class="btn btn-outline btn-xs" data-basemap-quick="s1-rtc-falsecolor" title="Radar de Apertura Sintética Copernicus Sentinel-1 SAR RTC (10 m · VV+VH)">📡 Radar S1</button>
+                <button type="button" class="btn btn-outline btn-xs" data-basemap-quick="jrc-gsw-occurrence" title="JRC Agua Superficial e Inundación (Comisión Europea)">🌊 JRC Agua</button>
+                <button type="button" class="btn btn-outline btn-xs" data-basemap-quick="sentinel2-2024" title="Mosaico anual abierto Copernicus Sentinel-2 Cloudless 2024">🛰️ S2 2024</button>
+                <button type="button" class="btn btn-outline btn-xs" data-basemap-quick="sentinel2-2018" title="Mosaico anual abierto Copernicus Sentinel-2 Cloudless 2018">🛰️ S2 2018</button>
                 <button type="button" class="btn btn-teal btn-xs" data-basemap-quick="carto-positron" title="Mapa Claro Vectorial de Referencia">🗺️ Vectorial</button>
+              </div>
+              <div id="gv-basemap-legend" style="margin-top:0.42rem;padding-top:0.35rem;border-top:1px dashed var(--c-border);font-size:0.73rem;color:var(--c-text-muted);line-height:1.35;">
+                🗺️ Mapa base vectorial de referencia cartográfica (OpenFreeMap / OpenStreetMap)
               </div>
             </div>
 

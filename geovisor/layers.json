@@ -131,6 +131,24 @@
         "stroke_width": 1.2
       },
       "caveat": "Sujeto a revisión técnica y acta de validación del Product Owner en OPAMSS."
+    },
+    {
+      "id": "sv-amss-upd-consolidado",
+      "title": "UPD AMSS Consolidado: Valores de suelo, equipamientos y permisos de construcción",
+      "group": "Mercado y gestión del suelo",
+      "format": "geojson",
+      "geometry_type": "polygon",
+      "status": "publicado",
+      "source_path": "geovisor/capas/upd_consolidado.geojson",
+      "expected_file_hint": "geovisor/capas/upd_consolidado.geojson",
+      "resolution": "Vectorial oficial OPAMSS (426 UPD, EPSG:4326)",
+      "style": {
+        "fill_color": "#fc8d59",
+        "fill_opacity": 0.45,
+        "stroke_color": "#14283F",
+        "stroke_width": 1.5
+      },
+      "caveat": "Capa consolidada con 426 UPD del AMSS que integra demografía (habitantes y viviendas), valores de suelo (P2_PROM USD/v²), equipamientos educativos (CANT_EDU), equipamientos de salud (CANT_SALUD), espacio público recreativo (EP_REC_M2) y permisos de construcción (PC_07_19, PC_20_26)."
     }
   ]
 }

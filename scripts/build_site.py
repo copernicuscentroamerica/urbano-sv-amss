@@ -1008,7 +1008,11 @@ def build_aplicacion_page(
                   <option value="esa-worldcover-2021">ESA WorldCover 10 m (2021 v200 · Mancha Urbana y Cobertura)</option>
                   <option value="esa-worldcover-2020">ESA WorldCover 10 m (2020 v100 · Mancha Urbana y Cobertura)</option>
                   <option value="s2-lulc-2023">Uso y Cobertura del Suelo Sentinel-2 10 m (Año 2023 · 9 clases)</option>
+                  <option value="s2-lulc-2022">Uso y Cobertura del Suelo Sentinel-2 10 m (Año 2022 · 9 clases)</option>
+                  <option value="s2-lulc-2021">Uso y Cobertura del Suelo Sentinel-2 10 m (Año 2021 · 9 clases)</option>
                   <option value="s2-lulc-2020">Uso y Cobertura del Suelo Sentinel-2 10 m (Año 2020 · 9 clases)</option>
+                  <option value="s2-lulc-2019">Uso y Cobertura del Suelo Sentinel-2 10 m (Año 2019 · 9 clases)</option>
+                  <option value="s2-lulc-2018">Uso y Cobertura del Suelo Sentinel-2 10 m (Año 2018 · 9 clases)</option>
                   <option value="s2-lulc-2017">Uso y Cobertura del Suelo Sentinel-2 10 m (Año 2017 · Línea base)</option>
                 </optgroup>
                 <optgroup label="3. Índices Espectrales y Bandas Copernicus Sentinel-2 L2A (10 m / 20 m)">
@@ -1312,11 +1316,40 @@ def render_copernicus_study_area_atlas_section(
     center_attr = html.escape(json.dumps(initial_center), quote=True)
     plates_meta = [
         (
-            "copernicus-dem-glo30",
+            "sentinel2-cloudless",
             "Lámina 1",
-            "⛰️ 1. Geomorfología y Pendientes (DEM 30 m)",
-            "Copernicus DEM GLO-30 (30 m · Hipsometría + Hillshade)",
+            "🛰️ 1. Mosaicos Anuales Sentinel-2 (2018–2024)",
+            "Mosaicos Anuales sin Nubes Copernicus Sentinel-2 Cloudless (Serie 2018–2024 · 10 m)",
+            "Compuestos ópticos anuales en color verdadero libres de nubes para comparar visualmente la evolución física urbana entre 2018 y 2024.",
+            [
+                ("sentinel2-2024", "2024"),
+                ("sentinel2-2023", "2023"),
+                ("sentinel2-2022", "2022"),
+                ("sentinel2-2021", "2021"),
+                ("sentinel2-2020", "2020"),
+                ("sentinel2-2019", "2019"),
+                ("sentinel2-2018", "2018 (Base)"),
+            ],
+            [
+                ("#E8ECEF", "Blanco / Gris brillante", "Techos industriales, comerciales, concreto nuevo y cubiertas metálicas."),
+                ("#9BA3AE", "Gris medio / Trama urbana", "Tejido residencial consolidado y red vial pavimentada."),
+                ("#D29D6A", "Ocre / Terracota / Marrón", "Suelo desnudo en apertura urbana, taludes o techos de teja/lámina."),
+                ("#1E5631", "Verde bosque oscuro", "Dosel arbóreo denso, bosques de galería en cañones y manglares."),
+                ("#76B041", "Verde claro / Herbáceo", "Parques urbanos, pastizales y cultivos periurbanos."),
+                ("#0F3A5D", "Azul marino / Turquesa", "Ríos principales, lagos, embalses y aguas costeras."),
+            ],
+        ),
+        (
+            "copernicus-dem-glo30",
+            "Lámina 2",
+            "⛰️ 2. Geomorfología y Pendientes (DEM 30 m)",
+            "Copernicus DEM GLO-30 (30 m · Hipsometría, Hillshade y Curvas de Nivel)",
             "Identifica valles, terrazas aluviales, mesetas y cañones escarpados donde la expansión urbana enfrenta susceptibilidad a deslizamientos o escorrentía concentrada.",
+            [
+                ("copernicus-dem-glo30", "Hipsometría + Hillshade"),
+                ("copernicus-dem-hillshade", "Solo Hillshade 30 m"),
+                ("copernicus-dem-viridis", "Viridis + Curvas de Nivel"),
+            ],
             [
                 ("#336699", "0 – 150 m s. n. m.", "Planicies bajas, zonas costeras y llanuras de inundación."),
                 ("#56A862", "150 – 500 m s. n. m.", "Terrazas aluviales y valles intramontanos de pendiente suave."),
@@ -1327,10 +1360,14 @@ def render_copernicus_study_area_atlas_section(
         ),
         (
             "esa-worldcover-2021",
-            "Lámina 2",
-            "🏙️ 2. Cobertura y Mancha Urbana 10 m (WorldCover)",
-            "ESA WorldCover 10 m (Fusión Sentinel-1 + Sentinel-2)",
+            "Lámina 3",
+            "🏙️ 3. Cobertura y Mancha Urbana 10 m (WorldCover)",
+            "ESA WorldCover 10 m (Fusión Sentinel-1 + Sentinel-2 · Ediciones 2021 y 2020)",
             "Separa con resolución de 10 m la huella edificada e impermeable (#FA0000) de los bosques urbanos, pastizales, cultivos, manglares y cuerpos de agua.",
+            [
+                ("esa-worldcover-2021", "Año 2021 (v200)"),
+                ("esa-worldcover-2020", "Año 2020 (v100)"),
+            ],
             [
                 ("#FA0000", "Edificado / Mancha Urbana", "Techos, pavimento vial, concreto y tejido urbano consolidado."),
                 ("#006400", "Cobertura Arbórea", "Bosques urbanos, parques, bosques de galería y arbolado denso."),
@@ -1343,10 +1380,19 @@ def render_copernicus_study_area_atlas_section(
         ),
         (
             "s2-lulc-2023",
-            "Lámina 3",
-            "📈 3. Uso del Suelo y Expansión 10 m (LULC)",
-            "Sentinel-2 10m Land Use / Land Cover (Año 2023)",
-            "Muestra la distribución funcional del uso del suelo a 10 m derivada de compuestos anuales Sentinel-2 L2A, destacando el área construida consolidada.",
+            "Lámina 4",
+            "📈 4. Uso del Suelo Anual 10 m (LULC 2017–2023)",
+            "Serie Anual de Uso del Suelo y Expansión Urbana Sentinel-2 10 m (2017–2023)",
+            "Permite medir año por año (2017 a 2023) el crecimiento del área construida consolidada (#C4281B) sobre suelos agrícolas, pastizales y bosques periurbanos.",
+            [
+                ("s2-lulc-2023", "2023"),
+                ("s2-lulc-2022", "2022"),
+                ("s2-lulc-2021", "2021"),
+                ("s2-lulc-2020", "2020"),
+                ("s2-lulc-2019", "2019"),
+                ("s2-lulc-2018", "2018"),
+                ("s2-lulc-2017", "2017 (Base)"),
+            ],
             [
                 ("#C4281B", "Área Construida (Built Area)", "Asentamientos humanos, tejido residencial, comercial e industrial."),
                 ("#397D49", "Árboles y Bosque Denso", "Remanentes forestales y reservas ecológicas periurbanas."),
@@ -1358,10 +1404,20 @@ def render_copernicus_study_area_atlas_section(
         ),
         (
             "s2-l2a-ndvi",
-            "Lámina 4",
-            "🌿 4. Vegetación Urbana e Islas Verdes (NDVI)",
-            "Copernicus Sentinel-2 L2A · Índice NDVI 10 m",
+            "Lámina 5",
+            "🌿 5. Vegetación Urbana e Islas Verdes (NDVI)",
+            "Copernicus Sentinel-2 L2A · Índice NDVI 10 m (Serie Multitemporal)",
             "Mide el vigor fotosintético ((B08-B04)/(B08+B04)) para localizar el déficit de áreas verdes intraurbanas y los corredores biológicos que mitigan islas de calor.",
+            [
+                ("s2-l2a-ndvi", "Reciente"),
+                ("s2-l2a-ndvi-2024", "2024"),
+                ("s2-l2a-ndvi-2023", "2023"),
+                ("s2-l2a-ndvi-2022", "2022"),
+                ("s2-l2a-ndvi-2021", "2021"),
+                ("s2-l2a-ndvi-2020", "2020"),
+                ("s2-l2a-ndvi-2019", "2019"),
+                ("s2-l2a-ndvi-2018", "2018"),
+            ],
             [
                 ("#A50026", "NDVI < 0.05 (Rojo intenso)", "Techos, asfalto, concreto sellado o cuerpos de agua."),
                 ("#F46D43", "NDVI 0.05 – 0.20 (Naranja)", "Tejido urbano denso con escaso o nulo arbolado viario."),
@@ -1372,10 +1428,20 @@ def render_copernicus_study_area_atlas_section(
         ),
         (
             "s2-l2a-ndbi",
-            "Lámina 5",
-            "🏗️ 5. Densidad Edificada e Impermeabilización (NDBI)",
-            "Copernicus Sentinel-2 L2A · Índice NDBI 20 m",
+            "Lámina 6",
+            "🏗️ 6. Densidad Edificada e Impermeabilización (NDBI)",
+            "Copernicus Sentinel-2 L2A · Índice NDBI 20 m (Serie Multitemporal)",
             "Evalúa la reflectancia en el infrarrojo de onda corta ((B11-B08)/(B11+B08)) para resaltar techos densos, concreto y suelo compactado.",
+            [
+                ("s2-l2a-ndbi", "Reciente"),
+                ("s2-l2a-ndbi-2024", "2024"),
+                ("s2-l2a-ndbi-2023", "2023"),
+                ("s2-l2a-ndbi-2022", "2022"),
+                ("s2-l2a-ndbi-2021", "2021"),
+                ("s2-l2a-ndbi-2020", "2020"),
+                ("s2-l2a-ndbi-2019", "2019"),
+                ("s2-l2a-ndbi-2018", "2018"),
+            ],
             [
                 ("#FCFFA4", "NDBI > +0.15 (Amarillo claro)", "Alta concentración de techos metálicos/concreto, naves o suelo expuesto."),
                 ("#F98E09", "NDBI 0.00 a +0.15 (Naranja)", "Tejido urbano consolidado con alta impermeabilización."),
@@ -1385,10 +1451,20 @@ def render_copernicus_study_area_atlas_section(
         ),
         (
             "s2-l2a-ndwi",
-            "Lámina 6",
-            "💧 6. Humedad Superficial y Estrés Térmico (NDWI)",
-            "Copernicus Sentinel-2 L2A · Índice NDWI 20 m",
+            "Lámina 7",
+            "💧 7. Humedad Superficial y Estrés Térmico (NDWI)",
+            "Copernicus Sentinel-2 L2A · Índice NDWI 20 m (Serie Multitemporal)",
             "Contrasta las zonas de retención hídrica y enfriamiento evaporativo (azul) frente a las superficies urbanas secas y calientes (rojo).",
+            [
+                ("s2-l2a-ndwi", "Reciente"),
+                ("s2-l2a-ndwi-2024", "2024"),
+                ("s2-l2a-ndwi-2023", "2023"),
+                ("s2-l2a-ndwi-2022", "2022"),
+                ("s2-l2a-ndwi-2021", "2021"),
+                ("s2-l2a-ndwi-2020", "2020"),
+                ("s2-l2a-ndwi-2019", "2019"),
+                ("s2-l2a-ndwi-2018", "2018"),
+            ],
             [
                 ("#053061", "NDWI > +0.25 (Azul marino)", "Cuerpos de agua, humedales y riberas con alta humedad."),
                 ("#4393C3", "NDWI +0.05 a +0.25 (Azul)", "Vegetación hidratada y suelos húmedos."),
@@ -1398,11 +1474,43 @@ def render_copernicus_study_area_atlas_section(
             ],
         ),
         (
+            "s2-l2a-composites",
+            "Lámina 8",
+            "🔬 8. Falso Color Infrarrojo y SWIR Urbano (S2 L2A)",
+            "Compuestos Multiespectrales Infrarrojo (B08-B04-B03) y SWIR Urbano (B12-B8A-B04)",
+            "Combina las bandas VNIR y SWIR de Sentinel-2 L2A para discriminar techos, concreto y suelo expuesto frente al vigor vegetal y cuerpos de agua.",
+            [
+                ("s2-l2a-falsecolor", "IR B08-B04-B03 (Reciente)"),
+                ("s2-l2a-falsecolor-2024", "IR 2024"),
+                ("s2-l2a-falsecolor-2022", "IR 2022"),
+                ("s2-l2a-falsecolor-2020", "IR 2020"),
+                ("s2-l2a-swir", "SWIR Urbano (Reciente)"),
+                ("s2-l2a-swir-2024", "SWIR 2024"),
+                ("s2-l2a-swir-2022", "SWIR 2022"),
+                ("s2-l2a-swir-2020", "SWIR 2020"),
+            ],
+            [
+                ("#D32F2F", "Rojo escarlata (En modo IR)", "Vegetación vigorosa y bosques urbanos con alta reflectancia NIR (B08)."),
+                ("#90CAF9", "Azul cian / Gris (En modo IR)", "Tejido urbano denso, techos, pavimento vial y concreto."),
+                ("#BA68C8", "Magenta / Púrpura (En modo SWIR)", "Huella urbana consolidada y materiales de construcción en onda corta (B12)."),
+                ("#2E7D32", "Verde esmeralda (En modo SWIR)", "Cobertura vegetal densa e hidratada."),
+            ],
+        ),
+        (
             "s1-rtc-falsecolor",
-            "Lámina 7",
-            "📡 7. Morfología Urbana por Radar (Sentinel-1 SAR)",
-            "Copernicus Sentinel-1 SAR RTC (10 m · Compuesto VV+VH)",
+            "Lámina 9",
+            "📡 9. Morfología Urbana por Radar (Sentinel-1 SAR)",
+            "Copernicus Sentinel-1 SAR RTC (10 m · Compuesto VV+VH y Polarización VV)",
             "Observación radar todo-tiempo (sin nubes): detecta construcciones por rebote doble (double-bounce) y distingue vegetación de láminas de agua.",
+            [
+                ("s1-rtc-falsecolor", "VV+VH Urbano (Reciente)"),
+                ("s1-rtc-falsecolor-2024", "VV+VH 2024"),
+                ("s1-rtc-falsecolor-2022", "VV+VH 2022"),
+                ("s1-rtc-falsecolor-2020", "VV+VH 2020"),
+                ("s1-rtc-vv", "Polarización VV (Grises)"),
+                ("s1-rtc-vv-2024", "VV Grises 2024"),
+                ("s1-rtc-vv-2020", "VV Grises 2020"),
+            ],
             [
                 ("#FFF59D", "Amarillo / Blanco brillante", "Rebote doble intenso: edificaciones densas, estructuras y taludes."),
                 ("#4CAF50", "Verde intenso (Alto VH)", "Dispersión volumétrica en dosel arbóreo y vegetación rugosa."),
@@ -1412,10 +1520,14 @@ def render_copernicus_study_area_atlas_section(
         ),
         (
             "jrc-gsw-occurrence",
-            "Lámina 8",
-            "🌊 8. Agua Superficial e Inundación (JRC)",
-            "EC JRC / Copernicus Global Surface Water (1984–2021)",
-            "Muestra la frecuencia histórica de agua superficial e inundaciones para identificar cauces permanentes y llanuras de desbordamiento.",
+            "Lámina 10",
+            "🌊 10. Agua Superficial e Inundación (JRC)",
+            "EC JRC / Copernicus Global Surface Water (Ocurrencia y Extensión Máxima)",
+            "Muestra la frecuencia histórica de agua superficial e inundaciones (1984–2021) y la huella máxima de desbordamiento.",
+            [
+                ("jrc-gsw-occurrence", "Ocurrencia Histórica (0–100%)"),
+                ("jrc-gsw-extent", "Extensión Máxima de Inundación"),
+            ],
             [
                 ("#0000FF", "80% – 100% Ocurrencia (Azul)", "Cauces permanentes de ríos, lagos, embalses y línea de costa."),
                 ("#8844CC", "25% – 80% Ocurrencia (Violeta)", "Cuerpos de agua estacionales, esteros y barras fluviales."),
@@ -1427,10 +1539,14 @@ def render_copernicus_study_area_atlas_section(
 
     tabs_html = []
     cards_html = []
-    for idx, (pk, pnum, pshort, ptitle, preading, pswatches) in enumerate(plates_meta):
+    for idx, (pk, pnum, pshort, ptitle, preading, pvariants, pswatches) in enumerate(plates_meta):
         active_cls = " is-active" if idx == 0 else ""
         tabs_html.append(
             f'<button type="button" class="atlas-plate-tab{active_cls}" data-atlas-plate="{esc(pk)}">{esc(pshort)}</button>'
+        )
+        var_pills = "".join(
+            f'<button type="button" class="atlas-variant-pill" data-atlas-plate-select="{esc(pk)}" data-atlas-variant-select="{esc(vk)}">{esc(vlbl)}</button>'
+            for vk, vlbl in pvariants
         )
         sw_rows = "".join(
             f'<li class="atlas-swatch-item">'
@@ -1445,11 +1561,15 @@ def render_copernicus_study_area_atlas_section(
             <article class="card" style="border-top:3px solid var(--c-brand-blue);display:flex;flex-direction:column;justify-content:space-between;">
               <div>
                 <div style="display:flex;justify-content:space-between;align-items:center;gap:0.4rem;margin-bottom:0.4rem;">
-                  <span class="badge badge-lime">{esc(pnum)} · Copernicus</span>
+                  <span class="badge badge-lime">{esc(pnum)} · {len(pvariants)} capas/años</span>
                   <button type="button" class="btn btn-teal btn-xs" data-atlas-plate-select="{esc(pk)}">Ver lámina en el mapa ↑</button>
                 </div>
                 <h3 style="margin:0.2rem 0 0.4rem;font-size:1.02rem;color:var(--c-brand-blue);">{esc(ptitle)}</h3>
-                <p style="font-size:0.86rem;color:var(--c-text-muted);margin-bottom:0.65rem;">{esc(preading)}</p>
+                <p style="font-size:0.86rem;color:var(--c-text-muted);margin-bottom:0.55rem;">{esc(preading)}</p>
+                <div class="atlas-variant-box" style="margin-bottom:0.65rem;">
+                  <div class="atlas-variant-box-label"><span>📅 Años / Capas disponibles (clic para cargar en el mapa):</span></div>
+                  <div class="atlas-variant-pills">{var_pills}</div>
+                </div>
                 <ul class="atlas-swatch-list">{sw_rows}</ul>
               </div>
             </article>
@@ -1460,9 +1580,9 @@ def render_copernicus_study_area_atlas_section(
     <section class="section" id="atlas-copernicus-zona" aria-labelledby="titulo-atlas-copernicus">
       <div class="section-header" style="margin-bottom:0.75rem;">
         <div>
-          <span class="badge badge-lime">Cartografía Temática Enmascarada · 8 Láminas Oficiales</span>
+          <span class="badge badge-lime">Cartografía Temática Enmascarada · 10 Láminas y Series Anuales Completas</span>
           <h2 id="titulo-atlas-copernicus" style="margin:0.3rem 0 0.2rem;">Atlas Temático Copernicus de la Zona de Estudio ({esc(territory_label)})</h2>
-          <p style="margin:0;color:var(--c-text-muted);font-size:0.93rem;">Explora las 8 láminas derivadas de sensores satelitales <strong>Copernicus (DEM GLO-30, ESA WorldCover 10 m, Sentinel-2 L2A y Sentinel-1 SAR)</strong> recortadas visualmente con el perímetro de <strong>{esc(territory_label)}</strong>, junto con la guía para interpretar cada color de la leyenda.</p>
+          <p style="margin:0;color:var(--c-text-muted);font-size:0.93rem;">Explora las <strong>10 láminas temáticas y todas las series multitemporales anuales (Mosaicos Sentinel-2 2018–2024, DEM GLO-30 en 3 modos, ESA WorldCover 2020–2021, Uso del Suelo LULC 2017–2023, Índices NDVI/NDBI/NDWI, Infrarrojo/SWIR, Radar Sentinel-1 y Agua JRC)</strong> recortadas visualmente con el perímetro de <strong>{esc(territory_label)}</strong>.</p>
         </div>
       </div>
 
@@ -1473,15 +1593,19 @@ def render_copernicus_study_area_atlas_section(
       <div class="atlas-copernicus-shell">
         <div class="atlas-copernicus-map-col">
           <div class="geovisor-toolbar" style="border-radius:0;">
-            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.55rem;">
-              <strong id="atlas-toolbar-plate-label" style="font-size:0.84rem;color:var(--c-accent-yellow);">⛰️ 1. Geomorfología y Pendientes (DEM 30 m)</strong>
-              <label style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.78rem;background:rgba(255,255,255,0.12);padding:0.2rem 0.5rem;border-radius:4px;cursor:pointer;">
-                <input type="checkbox" id="atlas-toggle-mask" checked>
-                <span>Enmascarar con límite de zona de estudio</span>
+            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.5rem;">
+              <strong id="atlas-toolbar-plate-label" style="font-size:0.82rem;color:var(--c-accent-yellow);">🛰️ 1. Mosaicos Anuales Sentinel-2 (2018–2024)</strong>
+              <label style="display:inline-flex;align-items:center;gap:0.3rem;font-size:0.76rem;color:#FFFFFF;">
+                <span>Año / Capa:</span>
+                <select id="atlas-toolbar-variant-select" class="atlas-toolbar-select" aria-label="Seleccionar año o variante de la lámina en la barra del mapa"></select>
               </label>
-              <label style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.75rem;">
-                <span>Máscara:</span>
-                <input type="range" id="atlas-mask-opacity" min="0" max="1" step="0.05" value="0.88" style="width:75px;" aria-label="Opacidad de la máscara del límite">
+              <label style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.76rem;background:rgba(255,255,255,0.12);padding:0.2rem 0.48rem;border-radius:4px;cursor:pointer;">
+                <input type="checkbox" id="atlas-toggle-mask" checked>
+                <span>Enmascarar límite</span>
+              </label>
+              <label style="display:inline-flex;align-items:center;gap:0.3rem;font-size:0.74rem;">
+                <span>Opacidad:</span>
+                <input type="range" id="atlas-mask-opacity" min="0" max="1" step="0.05" value="0.88" style="width:68px;" aria-label="Opacidad de la máscara del límite">
               </label>
             </div>
             <div class="geovisor-toolbar-actions">
@@ -1494,15 +1618,21 @@ def render_copernicus_study_area_atlas_section(
 
         <div class="atlas-copernicus-info-col" id="atlas-plate-detail">
           <div>
-            <span id="atlas-plate-badge" class="badge badge-lime">Lámina 1 · Dato Abierto Copernicus</span>
-            <h3 id="atlas-plate-title" style="margin:0.35rem 0 0.25rem;font-size:1.12rem;color:var(--c-brand-blue);">Geomorfología, Altitud y Pendientes Urbanas (Copernicus DEM GLO-30 · 30 m)</h3>
-            <p style="margin:0;font-size:0.8rem;color:var(--c-text-muted);"><strong>Sensor / Fuente:</strong> <span id="atlas-plate-sensor">Copernicus Digital Elevation Model (GLO-30 · 30 m)</span></p>
-            <p style="margin:0.15rem 0 0;font-size:0.78rem;color:var(--c-text-muted);"><strong>Parámetro / Expresión:</strong> <code id="atlas-plate-formula">Elevación hipsométrica + Sombreado Hillshade 30 m</code></p>
+            <span id="atlas-plate-badge" class="badge badge-lime">Lámina 1 · 2024</span>
+            <h3 id="atlas-plate-title" style="margin:0.35rem 0 0.25rem;font-size:1.1rem;color:var(--c-brand-blue);">Mosaico Anual sin Nubes Copernicus Sentinel-2 Cloudless · Año 2024 (10 m)</h3>
+            <p style="margin:0;font-size:0.8rem;color:var(--c-text-muted);"><strong>Sensor / Fuente:</strong> <span id="atlas-plate-sensor">Copernicus Sentinel-2 MSI · Mosaicos anuales sin nubes (10 m)</span></p>
+            <p style="margin:0.15rem 0 0;font-size:0.78rem;color:var(--c-text-muted);"><strong>Parámetro / Expresión:</strong> <code id="atlas-plate-formula">Compuesto anual óptico en Color Verdadero RGB (B04-B03-B02)</code></p>
+          </div>
+
+          <div class="atlas-variant-box">
+            <label for="atlas-panel-variant-select" id="atlas-variant-selector-label" class="atlas-variant-box-label">📅 Seleccionar año o variante de la capa:</label>
+            <select id="atlas-panel-variant-select" class="atlas-variant-select" aria-label="Selector desplegable de año o capa del tema"></select>
+            <div id="atlas-variant-pills" class="atlas-variant-pills" role="group" aria-label="Botones rápidos de año o variante"></div>
           </div>
 
           <div style="background:#F3F6FD;border-left:3px solid var(--c-brand-blue);padding:0.65rem 0.8rem;border-radius:4px;font-size:0.85rem;line-height:1.45;">
             <strong style="color:var(--c-brand-blue);display:block;margin-bottom:0.2rem;">Lectura e interpretación territorial en {esc(territory_label)}:</strong>
-            <span id="atlas-plate-reading">Permite identificar la configuración topográfica sobre la cual se asienta la mancha urbana.</span>
+            <span id="atlas-plate-reading">Permite inspeccionar visualmente la evolución física del territorio año por año entre 2018 y 2024.</span>
           </div>
 
           <div>
@@ -1513,8 +1643,8 @@ def render_copernicus_study_area_atlas_section(
       </div>
 
       <div style="margin-top:1.4rem;">
-        <h3 style="margin:0 0 0.4rem;color:var(--c-brand-blue);">Catálogo completo de las 8 Láminas y Leyendas Cromáticas de Referencia</h3>
-        <p style="margin:0 0 0.9rem;font-size:0.88rem;color:var(--c-text-muted);">Puedes consultar o imprimir todas las leyendas cromáticas a continuación, o pulsar <strong>Ver lámina en el mapa ↑</strong> en cualquier tarjeta para cargarla en el visor interactivo:</p>
+        <h3 style="margin:0 0 0.4rem;color:var(--c-brand-blue);">Catálogo completo de las 10 Láminas, Selectores Anuales y Leyendas Cromáticas</h3>
+        <p style="margin:0 0 0.9rem;font-size:0.88rem;color:var(--c-text-muted);">Haz clic en cualquier <strong>año o modo</strong> dentro de las tarjetas inferiores (o en <strong>Ver lámina en el mapa ↑</strong>) para cargarlo directamente en el visor superior con el límite de la zona de estudio:</p>
         <div class="grid-2">
           {"".join(cards_html)}
         </div>

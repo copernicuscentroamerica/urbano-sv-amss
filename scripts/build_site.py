@@ -1127,6 +1127,7 @@ def build_aplicacion_page(
               <button type="button" id="gv-toggle-sidebar" class="btn btn-outline-light btn-xs" title="Ocultar o mostrar el panel lateral de capas">⇄ Panel lateral</button>
               <button type="button" id="gv-open-folder-tab" class="btn btn-outline-light btn-xs">Cargar desde carpeta</button>
               <button type="button" id="gv-reset-view" class="btn btn-outline-light btn-xs">Encuadre inicial</button>
+              <a class="btn btn-outline-light btn-xs" href="{html.escape(ctx.site_url('assets/descargas/atlas_copernicus_zona_estudio.pdf'), quote=True)}" download="Atlas_Copernicus_{esc(pid)}.pdf" title="Descargar Atlas Temático Copernicus con identidad gráfica institucional en PDF">📥 Atlas PDF</a>
               <a class="btn btn-outline-light btn-xs" href="{geolibre_json_href}">JSON GeoLibre</a>
               <a id="btn-open-geolibre-studio" class="btn btn-primary btn-xs" href="{html.escape(studio_open_href, quote=True)}" target="_blank" rel="noopener noreferrer">Abrir en GeoLibre Studio ↗</a>
             </div>
@@ -1312,8 +1313,15 @@ def render_copernicus_study_area_atlas_section(
     territory_label: str,
     initial_center: list[float],
     initial_zoom: float,
+    ctx: SiteContext | None = None,
+    pid: str = "zona-estudio",
 ) -> str:
     center_attr = html.escape(json.dumps(initial_center), quote=True)
+    pdf_href = html.escape(
+        ctx.site_url("assets/descargas/atlas_copernicus_zona_estudio.pdf") if ctx else "../assets/descargas/atlas_copernicus_zona_estudio.pdf",
+        quote=True,
+    )
+    pdf_dl_name = f"Atlas_Copernicus_{pid}.pdf"
     plates_meta = [
         (
             "sentinel2-cloudless",
@@ -1586,6 +1594,21 @@ def render_copernicus_study_area_atlas_section(
         </div>
       </div>
 
+      <div class="atlas-pdf-banner" role="region" aria-label="Descarga del Atlas Institucional en PDF">
+        <div class="atlas-pdf-banner-inner">
+          <div class="atlas-pdf-banner-text">
+            <span class="atlas-pdf-banner-eyebrow">📘 Edición Editorial A4 Horizontal · Identidad Institucional 2.0.0-copernicus-2026</span>
+            <h3 class="atlas-pdf-banner-title">Documento Oficial del Atlas Temático Copernicus para Descargar en PDF</h3>
+            <p class="atlas-pdf-banner-desc">Incluye portada institucional con trama cartográfica y logos oficiales (Global Gateway, Unión Europea, CCVAH, SISCA, SICA, Cooperación Alemana, GIZ, Copernicus LAC Chile e instituciones participantes), índice técnico y las <strong>10 láminas cartográficas a página completa</strong> con el recorte de <strong>{esc(territory_label)}</strong> y sus tablas de leyendas cromáticas.</p>
+          </div>
+          <div class="atlas-pdf-banner-actions">
+            <a class="btn btn-primary" href="{pdf_href}" download="{esc(pdf_dl_name)}">📥 Descargar Atlas Institucional (PDF · 12 Págs.)</a>
+            <button type="button" class="btn btn-outline-light" data-atlas-export-pdf>🖨️ Exportar lámina / año actual a PDF</button>
+            <a class="btn btn-outline-light btn-xs" href="{pdf_href}" target="_blank" rel="noopener noreferrer">Abrir PDF en pestaña ↗</a>
+          </div>
+        </div>
+      </div>
+
       <div class="atlas-plate-tabs" role="tablist" aria-label="Láminas temáticas del Atlas Copernicus">
         {"".join(tabs_html)}
       </div>
@@ -1610,8 +1633,10 @@ def render_copernicus_study_area_atlas_section(
               </label>
             </div>
             <div class="geovisor-toolbar-actions">
+              <a class="btn btn-primary btn-xs" href="{pdf_href}" download="{esc(pdf_dl_name)}" title="Descargar el Atlas completo de 12 páginas en PDF">📥 Descargar Atlas PDF</a>
+              <button type="button" class="btn btn-outline-light btn-xs" data-atlas-export-pdf title="Exportar la lámina y año actuales en formato A4 Horizontal institucional">🖨️ Lámina a PDF</button>
               <button type="button" id="atlas-fit-bounds" class="btn btn-outline-light btn-xs">Encuadrar límite</button>
-              <button type="button" id="atlas-toggle-fullscreen" class="btn btn-primary btn-xs">⛶ Pantalla completa</button>
+              <button type="button" id="atlas-toggle-fullscreen" class="btn btn-outline-light btn-xs">⛶ Pantalla completa</button>
             </div>
           </div>
           <div class="atlas-map-stage">
@@ -1661,6 +1686,11 @@ def render_copernicus_study_area_atlas_section(
           <div>
             <h4 style="margin:0 0 0.45rem;font-size:0.86rem;text-transform:uppercase;letter-spacing:0.03em;color:var(--c-brand-blue);">Guía de interpretación de los colores de la leyenda</h4>
             <ul id="atlas-plate-swatches" class="atlas-swatch-list"></ul>
+          </div>
+
+          <div style="display:flex;flex-wrap:wrap;gap:0.45rem;padding-top:0.5rem;border-top:1px solid var(--c-border);">
+            <a class="btn btn-primary btn-xs" href="{pdf_href}" download="{esc(pdf_dl_name)}">📥 Descargar Atlas Completo (PDF)</a>
+            <button type="button" class="btn btn-teal btn-xs" data-atlas-export-pdf>🖨️ Exportar esta lámina y año a PDF</button>
           </div>
         </div>
       </div>
@@ -1777,6 +1807,8 @@ def build_resultados_page(
         territory_label=manifest["territory"]["label"],
         initial_center=initial_center,
         initial_zoom=initial_zoom,
+        ctx=ctx,
+        pid=manifest["id"],
     )
 
     body = f"""

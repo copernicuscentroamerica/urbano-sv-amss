@@ -162,7 +162,7 @@ def render_shell(
         )
         maplibre_scripts = (
             '<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js" crossorigin="anonymous"></script>\n'
-            f'  <script src="{html.escape(ctx.site_url("assets/js/geovisor.js"), quote=True)}?v=2.0.3"></script>'
+            f'  <script src="{html.escape(ctx.site_url("assets/js/geovisor.js"), quote=True)}?v=2.0.5"></script>'
         )
 
     updated_raw = manifest["governance"].get("content_updated_at")
@@ -176,7 +176,7 @@ def render_shell(
   <title>{esc(page_title)} · {esc(short_title)}</title>
   <meta name="description" content="{esc(manifest['summary'])}">
   {robots_meta}
-  <link rel="stylesheet" href="{html.escape(ctx.site_url('assets/css/styles.css'), quote=True)}?v=2.0.3">
+  <link rel="stylesheet" href="{html.escape(ctx.site_url('assets/css/styles.css'), quote=True)}?v=2.0.5">
   {maplibre_head}
 </head>
 <body>
@@ -236,7 +236,7 @@ def render_shell(
     </div>
   </footer>
 
-  <script src="{html.escape(ctx.site_url('assets/js/ui.js'), quote=True)}?v=2.0.3"></script>
+  <script src="{html.escape(ctx.site_url('assets/js/ui.js'), quote=True)}?v=2.0.5"></script>
   {maplibre_scripts}
 </body>
 </html>
@@ -996,15 +996,50 @@ def build_aplicacion_page(
           </div>
 
           <div class="geovisor-panel is-active" data-gv-panel="layers">
-            <div class="filter-field" style="margin-bottom:0.75rem;">
-              <label for="gv-basemap-select">Mapa base de referencia</label>
+            <div class="filter-field" style="margin-bottom:0.65rem;">
+              <label for="gv-basemap-select">Mapa base de referencia y mosaicos Sentinel-2</label>
               <select id="gv-basemap-select">
-                <option value="carto-positron">Mapa Claro Vectorial (OpenFreeMap)</option>
-                <option value="osm-standard">OpenStreetMap Estándar</option>
-                <option value="carto-dark">Modo Oscuro Vectorial (OpenFreeMap)</option>
-                <option value="esri-imagery">Imagen Satelital (Referencia visual)</option>
+                <optgroup label="Mosaicos Satelitales Copernicus Sentinel-2 (Abiertos)">
+                  <option value="sentinel2-2024">Copernicus Sentinel-2 Cloudless (Mosaico 2024 · EOX)</option>
+                  <option value="sentinel2-2023">Copernicus Sentinel-2 Cloudless (Mosaico 2023 · EOX)</option>
+                  <option value="sentinel2-2021">Copernicus Sentinel-2 Cloudless (Mosaico 2021 · EOX)</option>
+                  <option value="sentinel2-2020">Copernicus Sentinel-2 Cloudless (Mosaico 2020 · EOX)</option>
+                  <option value="sentinel2-2018">Copernicus Sentinel-2 Cloudless (Mosaico 2018 · EOX)</option>
+                  <option value="copernicus-terrain">Relieve y Topografía (Terrain Light · DEM)</option>
+                </optgroup>
+                <optgroup label="Mapas Base Vectoriales y Referencia">
+                  <option value="carto-positron" selected>Mapa Claro Vectorial (OpenFreeMap)</option>
+                  <option value="osm-standard">OpenStreetMap Estándar</option>
+                  <option value="carto-dark">Modo Oscuro Vectorial (OpenFreeMap)</option>
+                  <option value="esri-imagery">Imagen Satelital de Alta Resolución (Esri)</option>
+                </optgroup>
               </select>
             </div>
+
+            <details style="margin-bottom:0.75rem;background:#F3F6FD;border:1px solid var(--c-border);border-radius:6px;padding:0.5rem 0.65rem;font-size:0.8rem;">
+              <summary style="cursor:pointer;font-weight:700;color:var(--c-brand-blue);">🛰️ Conectar Copernicus Data Space (CDSE) / WMS / XYZ</summary>
+              <div style="display:flex;flex-direction:column;gap:0.45rem;margin-top:0.55rem;">
+                <p style="margin:0;font-size:0.76rem;color:var(--c-text-muted);">Ingresa tu <strong>Instance ID</strong> de <a href="https://shapps.dataspace.copernicus.eu/dashboard/#/configurations" target="_blank" rel="noopener noreferrer">CDSE Sentinel Hub ↗</a> o pega cualquier URL de teselas <code>WMS / WMTS / XYZ</code>:</p>
+                <input id="gv-cdse-instance-or-url" type="text" placeholder="Instance ID (UUID) o URL https://.../{z}/{y}/{x}" style="padding:0.35rem 0.5rem;border:1px solid var(--c-border-strong);border-radius:4px;font-size:0.78rem;">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;">
+                  <select id="gv-cdse-layer" style="padding:0.35rem;border:1px solid var(--c-border-strong);border-radius:4px;font-size:0.76rem;" title="Capa configurada en tu instancia CDSE">
+                    <option value="TRUE-COLOR-S2L2A">TRUE-COLOR-S2L2A (Color real)</option>
+                    <option value="FALSE-COLOR">FALSE-COLOR (Infrarrojo)</option>
+                    <option value="NDVI">NDVI (Vegetación)</option>
+                    <option value="NDBI">NDBI (Área construida)</option>
+                    <option value="MOISTURE-INDEX">MOISTURE-INDEX (Humedad)</option>
+                    <option value="S1-VV-VH">Sentinel-1 SAR (VV/VH)</option>
+                  </select>
+                  <input id="gv-cdse-date" type="date" value="2026-11-10" style="padding:0.3rem 0.4rem;border:1px solid var(--c-border-strong);border-radius:4px;font-size:0.76rem;" title="Fecha máxima de escena Sentinel">
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:0.4rem;margin-top:0.15rem;">
+                  <button type="button" id="gv-apply-cdse-btn" class="btn btn-teal btn-xs" style="flex:1;">Aplicar mapa base CDSE / WMS</button>
+                  <a id="gv-open-cdse-browser" class="btn btn-outline btn-xs" href="https://browser.dataspace.copernicus.eu/" target="_blank" rel="noopener noreferrer" title="Abrir Copernicus Browser centrado en este proyecto">Copernicus Browser ↗</a>
+                </div>
+                <p id="gv-cdse-status" style="margin:0;font-size:0.74rem;color:var(--c-brand-blue);font-weight:600;"></p>
+              </div>
+            </details>
+
             <label style="display:flex;align-items:center;gap:0.45rem;font-size:0.83rem;font-weight:600;margin-bottom:0.6rem;">
               <input type="checkbox" id="gv-toggle-ref-marker" checked>
               <span>Mostrar marcador de centroide referencial</span>
@@ -1049,6 +1084,8 @@ def build_aplicacion_page(
           <div class="geovisor-toolbar">
             <div><strong>{esc(layers_cfg.get('title', manifest['title']))}</strong> · Motor MapLibre / GeoLibre</div>
             <div class="geovisor-toolbar-actions">
+              <button type="button" id="gv-toggle-fullscreen" class="btn btn-teal btn-xs" title="Ver el geovisor en pantalla completa (Esc para salir)">⛶ Pantalla completa</button>
+              <button type="button" id="gv-toggle-sidebar" class="btn btn-outline-light btn-xs" title="Ocultar o mostrar el panel lateral de capas">⇄ Panel lateral</button>
               <button type="button" id="gv-open-folder-tab" class="btn btn-outline-light btn-xs">Cargar desde carpeta</button>
               <button type="button" id="gv-reset-view" class="btn btn-outline-light btn-xs">Encuadre inicial</button>
               <a class="btn btn-outline-light btn-xs" href="{geolibre_json_href}">JSON GeoLibre</a>

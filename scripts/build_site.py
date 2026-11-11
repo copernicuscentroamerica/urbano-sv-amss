@@ -997,9 +997,14 @@ def build_aplicacion_page(
 
           <div class="geovisor-panel is-active" data-gv-panel="layers">
             <div class="filter-field" style="margin-bottom:0.5rem;">
-              <label for="gv-basemap-select">Mapa base y Mosaicos Abiertos Copernicus Sentinel-2 / DEM</label>
+              <label for="gv-basemap-select">Mapa base y Mosaicos Abiertos Copernicus Sentinel-2 / DEM GLO-30</label>
               <select id="gv-basemap-select">
-                <optgroup label="Mosaicos Abiertos Copernicus Sentinel-2 Cloudless y DEM (Sin API Key)">
+                <optgroup label="Modelo Digital de Elevación Oficial Copernicus DEM (GLO-30 · 30 m)">
+                  <option value="copernicus-dem-glo30">Copernicus DEM GLO-30 (30 m · Elevación Hipsométrica + Sombreado)</option>
+                  <option value="copernicus-dem-hillshade">Copernicus DEM GLO-30 (30 m · Sombreado de Relieve / Hillshade)</option>
+                  <option value="copernicus-dem-viridis">Copernicus DEM GLO-30 (30 m · Hipsometría Viridis + Curvas de Nivel)</option>
+                </optgroup>
+                <optgroup label="Mosaicos Abiertos Copernicus Sentinel-2 Cloudless (Sin API Key)">
                   <option value="sentinel2-2024">Copernicus Sentinel-2 Cloudless (Mosaico 2024 · EOX)</option>
                   <option value="sentinel2-2023">Copernicus Sentinel-2 Cloudless (Mosaico 2023 · EOX)</option>
                   <option value="sentinel2-2022">Copernicus Sentinel-2 Cloudless (Mosaico 2022 · EOX)</option>
@@ -1007,7 +1012,6 @@ def build_aplicacion_page(
                   <option value="sentinel2-2020">Copernicus Sentinel-2 Cloudless (Mosaico 2020 · EOX)</option>
                   <option value="sentinel2-2019">Copernicus Sentinel-2 Cloudless (Mosaico 2019 · EOX)</option>
                   <option value="sentinel2-2018">Copernicus Sentinel-2 Cloudless (Mosaico 2018 · EOX)</option>
-                  <option value="copernicus-terrain">Relieve y Topografía Copernicus DEM (Terrain Light)</option>
                 </optgroup>
                 <optgroup label="Mapas Base Vectoriales y Referencia">
                   <option value="carto-positron" selected>Mapa Claro Vectorial (OpenFreeMap)</option>
@@ -1019,13 +1023,14 @@ def build_aplicacion_page(
             </div>
 
             <div style="margin-bottom:0.75rem;background:#F3F6FD;border:1px solid var(--c-border);border-radius:6px;padding:0.5rem 0.6rem;">
-              <div style="font-size:0.74rem;font-weight:700;color:var(--c-brand-blue);margin-bottom:0.38rem;">🛰️ Acceso rápido multitemporal Sentinel-2 Cloudless / DEM:</div>
+              <div style="font-size:0.74rem;font-weight:700;color:var(--c-brand-blue);margin-bottom:0.38rem;">🛰️ Acceso rápido Copernicus Sentinel-2 / DEM GLO-30 (30 m):</div>
               <div style="display:flex;flex-wrap:wrap;gap:0.32rem;">
+                <button type="button" class="btn btn-outline btn-xs" data-basemap-quick="copernicus-dem-glo30" title="Copernicus DEM GLO-30 (30 m · Elevación Hipsométrica + Sombreado)">⛰️ DEM GLO-30 (30m)</button>
+                <button type="button" class="btn btn-outline btn-xs" data-basemap-quick="copernicus-dem-hillshade" title="Copernicus DEM GLO-30 (30 m · Sombreado de Relieve Puro / Hillshade)">⛰️ Hillshade 30m</button>
                 <button type="button" class="btn btn-outline btn-xs" data-basemap-quick="sentinel2-2024" title="Mosaico anual abierto Copernicus Sentinel-2 Cloudless 2024">S2 · 2024</button>
                 <button type="button" class="btn btn-outline btn-xs" data-basemap-quick="sentinel2-2022" title="Mosaico anual abierto Copernicus Sentinel-2 Cloudless 2022">S2 · 2022</button>
                 <button type="button" class="btn btn-outline btn-xs" data-basemap-quick="sentinel2-2020" title="Mosaico anual abierto Copernicus Sentinel-2 Cloudless 2020">S2 · 2020</button>
                 <button type="button" class="btn btn-outline btn-xs" data-basemap-quick="sentinel2-2018" title="Mosaico anual abierto Copernicus Sentinel-2 Cloudless 2018">S2 · 2018</button>
-                <button type="button" class="btn btn-outline btn-xs" data-basemap-quick="copernicus-terrain" title="Modelo de Relieve y Topografía Copernicus DEM">⛰️ Relieve DEM</button>
                 <button type="button" class="btn btn-teal btn-xs" data-basemap-quick="carto-positron" title="Mapa Claro Vectorial de Referencia">🗺️ Vectorial</button>
               </div>
             </div>

@@ -1064,6 +1064,17 @@ def build_aplicacion_page(
               </div>
             </div>
 
+            <div style="margin-bottom:0.65rem;padding:0.45rem 0.6rem;background:#FFFDF5;border:1px solid #E5D48A;border-radius:6px;">
+              <label style="display:flex;align-items:center;gap:0.45rem;font-size:0.8rem;font-weight:700;color:var(--c-brand-blue);">
+                <input type="checkbox" id="gv-toggle-mask" checked>
+                <span>Enmascarar fuera del límite de zona de estudio</span>
+              </label>
+              <div style="display:flex;align-items:center;gap:0.45rem;margin-top:0.3rem;font-size:0.74rem;color:var(--c-text-muted);">
+                <span>Opacidad máscara:</span>
+                <input type="range" id="gv-mask-opacity" min="0" max="1" step="0.05" value="0.88" style="flex:1;" aria-label="Opacidad de máscara exterior">
+              </div>
+            </div>
+
             <label style="display:flex;align-items:center;gap:0.45rem;font-size:0.83rem;font-weight:600;margin-bottom:0.6rem;">
               <input type="checkbox" id="gv-toggle-ref-marker" checked>
               <span>Mostrar marcador de centroide referencial</span>
@@ -1293,6 +1304,225 @@ def build_metodologia_page(
     )
 
 
+def render_copernicus_study_area_atlas_section(
+    territory_label: str,
+    initial_center: list[float],
+    initial_zoom: float,
+) -> str:
+    center_attr = html.escape(json.dumps(initial_center), quote=True)
+    plates_meta = [
+        (
+            "copernicus-dem-glo30",
+            "Lámina 1",
+            "⛰️ 1. Geomorfología y Pendientes (DEM 30 m)",
+            "Copernicus DEM GLO-30 (30 m · Hipsometría + Hillshade)",
+            "Identifica valles, terrazas aluviales, mesetas y cañones escarpados donde la expansión urbana enfrenta susceptibilidad a deslizamientos o escorrentía concentrada.",
+            [
+                ("#336699", "0 – 150 m s. n. m.", "Planicies bajas, zonas costeras y llanuras de inundación."),
+                ("#56A862", "150 – 500 m s. n. m.", "Terrazas aluviales y valles intramontanos de pendiente suave."),
+                ("#E6C267", "500 – 1200 m s. n. m.", "Piedemonte, mesetas intermedias y laderas moderadas."),
+                ("#A66A43", "> 1200 m s. n. m.", "Escarpes pronunciados, cordilleras y divisorias de cuenca."),
+                ("#3A3F4B", "Sombreado Hillshade 30 m", "Barrancos, taludes y laderas de fuerte pendiente (>25%)."),
+            ],
+        ),
+        (
+            "esa-worldcover-2021",
+            "Lámina 2",
+            "🏙️ 2. Cobertura y Mancha Urbana 10 m (WorldCover)",
+            "ESA WorldCover 10 m (Fusión Sentinel-1 + Sentinel-2)",
+            "Separa con resolución de 10 m la huella edificada e impermeable (#FA0000) de los bosques urbanos, pastizales, cultivos, manglares y cuerpos de agua.",
+            [
+                ("#FA0000", "Edificado / Mancha Urbana", "Techos, pavimento vial, concreto y tejido urbano consolidado."),
+                ("#006400", "Cobertura Arbórea", "Bosques urbanos, parques, bosques de galería y arbolado denso."),
+                ("#FFBB22", "Arbustos y Matorral", "Vegetación leñosa baja y laderas en regeneración."),
+                ("#FFFF4C", "Pastizales y Herbáceas", "Áreas verdes abiertas, lotes baldíos con pasto y praderas."),
+                ("#F096FF", "Cultivos Agrícolas", "Borde agrourbano sujeto a presión por expansión residencial."),
+                ("#B4B4B4", "Suelo Desnudo / Expuesto", "Terrenos en movimiento de tierra, taludes o trazados en apertura."),
+                ("#0064C8", "Agua Permanente y Manglar", "Ríos, lagos, esteros (#0064C8) y manglares costeros (#00CF75)."),
+            ],
+        ),
+        (
+            "s2-lulc-2023",
+            "Lámina 3",
+            "📈 3. Uso del Suelo y Expansión 10 m (LULC)",
+            "Sentinel-2 10m Land Use / Land Cover (Año 2023)",
+            "Muestra la distribución funcional del uso del suelo a 10 m derivada de compuestos anuales Sentinel-2 L2A, destacando el área construida consolidada.",
+            [
+                ("#C4281B", "Área Construida (Built Area)", "Asentamientos humanos, tejido residencial, comercial e industrial."),
+                ("#397D49", "Árboles y Bosque Denso", "Remanentes forestales y reservas ecológicas periurbanas."),
+                ("#E49635", "Cultivos", "Superficie agrícola en transición urbano-rural."),
+                ("#DFC35A", "Matorral / Rangeland", "Vegetación arbustiva y herbácea abierta."),
+                ("#A59B8F", "Suelo Desnudo", "Superficies sin cobertura vegetal o en explanación."),
+                ("#419BDF", "Agua y Humedales", "Cuerpos de agua (#419BDF) y vegetación inundable (#88B053)."),
+            ],
+        ),
+        (
+            "s2-l2a-ndvi",
+            "Lámina 4",
+            "🌿 4. Vegetación Urbana e Islas Verdes (NDVI)",
+            "Copernicus Sentinel-2 L2A · Índice NDVI 10 m",
+            "Mide el vigor fotosintético ((B08-B04)/(B08+B04)) para localizar el déficit de áreas verdes intraurbanas y los corredores biológicos que mitigan islas de calor.",
+            [
+                ("#A50026", "NDVI < 0.05 (Rojo intenso)", "Techos, asfalto, concreto sellado o cuerpos de agua."),
+                ("#F46D43", "NDVI 0.05 – 0.20 (Naranja)", "Tejido urbano denso con escaso o nulo arbolado viario."),
+                ("#FEE08B", "NDVI 0.20 – 0.38 (Amarillo)", "Zonas residenciales mixtas con jardines dispersos o pasto seco."),
+                ("#66BD63", "NDVI 0.38 – 0.60 (Verde claro)", "Parques urbanos, bulevares arbolados y huertos periurbanos."),
+                ("#006837", "NDVI > 0.60 (Verde oscuro)", "Dosel forestal denso en cañones, riberas y áreas protegidas."),
+            ],
+        ),
+        (
+            "s2-l2a-ndbi",
+            "Lámina 5",
+            "🏗️ 5. Densidad Edificada e Impermeabilización (NDBI)",
+            "Copernicus Sentinel-2 L2A · Índice NDBI 20 m",
+            "Evalúa la reflectancia en el infrarrojo de onda corta ((B11-B08)/(B11+B08)) para resaltar techos densos, concreto y suelo compactado.",
+            [
+                ("#FCFFA4", "NDBI > +0.15 (Amarillo claro)", "Alta concentración de techos metálicos/concreto, naves o suelo expuesto."),
+                ("#F98E09", "NDBI 0.00 a +0.15 (Naranja)", "Tejido urbano consolidado con alta impermeabilización."),
+                ("#AC2F5E", "NDBI -0.15 a 0.00 (Magenta)", "Zonas residenciales de densidad media con patios arborizados."),
+                ("#1B0C41", "NDBI < -0.15 (Violeta/Negro)", "Cobertura vegetal densa y cuerpos de agua permeables."),
+            ],
+        ),
+        (
+            "s2-l2a-ndwi",
+            "Lámina 6",
+            "💧 6. Humedad Superficial y Estrés Térmico (NDWI)",
+            "Copernicus Sentinel-2 L2A · Índice NDWI 20 m",
+            "Contrasta las zonas de retención hídrica y enfriamiento evaporativo (azul) frente a las superficies urbanas secas y calientes (rojo).",
+            [
+                ("#053061", "NDWI > +0.25 (Azul marino)", "Cuerpos de agua, humedales y riberas con alta humedad."),
+                ("#4393C3", "NDWI +0.05 a +0.25 (Azul)", "Vegetación hidratada y suelos húmedos."),
+                ("#F7F7F7", "NDWI -0.05 a +0.05 (Blanco)", "Humedad superficial intermedia."),
+                ("#D6604D", "NDWI -0.20 a -0.05 (Salmón)", "Zonas urbanizadas secas o vegetación con estrés hídrico."),
+                ("#67001F", "NDWI < -0.20 (Rojo oscuro)", "Superficies urbanas impermeables y secas con alta carga térmica."),
+            ],
+        ),
+        (
+            "s1-rtc-falsecolor",
+            "Lámina 7",
+            "📡 7. Morfología Urbana por Radar (Sentinel-1 SAR)",
+            "Copernicus Sentinel-1 SAR RTC (10 m · Compuesto VV+VH)",
+            "Observación radar todo-tiempo (sin nubes): detecta construcciones por rebote doble (double-bounce) y distingue vegetación de láminas de agua.",
+            [
+                ("#FFF59D", "Amarillo / Blanco brillante", "Rebote doble intenso: edificaciones densas, estructuras y taludes."),
+                ("#4CAF50", "Verde intenso (Alto VH)", "Dispersión volumétrica en dosel arbóreo y vegetación rugosa."),
+                ("#5C6BC0", "Azul / Añil intermedio", "Suelos agrícolas, pastizales bajos o superficies semirrugosas."),
+                ("#0D1B2A", "Azul oscuro / Negro", "Espejos de agua calma (ríos, lagos, mar) o zonas urbanas anegadas."),
+            ],
+        ),
+        (
+            "jrc-gsw-occurrence",
+            "Lámina 8",
+            "🌊 8. Agua Superficial e Inundación (JRC)",
+            "EC JRC / Copernicus Global Surface Water (1984–2021)",
+            "Muestra la frecuencia histórica de agua superficial e inundaciones para identificar cauces permanentes y llanuras de desbordamiento.",
+            [
+                ("#0000FF", "80% – 100% Ocurrencia (Azul)", "Cauces permanentes de ríos, lagos, embalses y línea de costa."),
+                ("#8844CC", "25% – 80% Ocurrencia (Violeta)", "Cuerpos de agua estacionales, esteros y barras fluviales."),
+                ("#FF3366", "1% – 25% Ocurrencia (Rosa)", "Llanuras de inundación episódica durante eventos hidrometeorológicos."),
+                ("#D9DFEA", "Relieve base emergido", "Terreno sin lámina de agua detectada a escala satelital."),
+            ],
+        ),
+    ]
+
+    tabs_html = []
+    cards_html = []
+    for idx, (pk, pnum, pshort, ptitle, preading, pswatches) in enumerate(plates_meta):
+        active_cls = " is-active" if idx == 0 else ""
+        tabs_html.append(
+            f'<button type="button" class="atlas-plate-tab{active_cls}" data-atlas-plate="{esc(pk)}">{esc(pshort)}</button>'
+        )
+        sw_rows = "".join(
+            f'<li class="atlas-swatch-item">'
+            f'<span class="atlas-swatch-chip" style="background:{esc(c)};"></span>'
+            f'<span class="atlas-swatch-label">{esc(lbl)}</span>'
+            f'<span class="atlas-swatch-desc">{esc(d)}</span>'
+            f"</li>"
+            for c, lbl, d in pswatches
+        )
+        cards_html.append(
+            f"""
+            <article class="card" style="border-top:3px solid var(--c-brand-blue);display:flex;flex-direction:column;justify-content:space-between;">
+              <div>
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:0.4rem;margin-bottom:0.4rem;">
+                  <span class="badge badge-lime">{esc(pnum)} · Copernicus</span>
+                  <button type="button" class="btn btn-teal btn-xs" data-atlas-plate-select="{esc(pk)}">Ver lámina en el mapa ↑</button>
+                </div>
+                <h3 style="margin:0.2rem 0 0.4rem;font-size:1.02rem;color:var(--c-brand-blue);">{esc(ptitle)}</h3>
+                <p style="font-size:0.86rem;color:var(--c-text-muted);margin-bottom:0.65rem;">{esc(preading)}</p>
+                <ul class="atlas-swatch-list">{sw_rows}</ul>
+              </div>
+            </article>
+            """
+        )
+
+    return f"""
+    <section class="section" id="atlas-copernicus-zona" aria-labelledby="titulo-atlas-copernicus">
+      <div class="section-header" style="margin-bottom:0.75rem;">
+        <div>
+          <span class="badge badge-lime">Cartografía Temática Enmascarada · 8 Láminas Oficiales</span>
+          <h2 id="titulo-atlas-copernicus" style="margin:0.3rem 0 0.2rem;">Atlas Temático Copernicus de la Zona de Estudio ({esc(territory_label)})</h2>
+          <p style="margin:0;color:var(--c-text-muted);font-size:0.93rem;">Explora las 8 láminas derivadas de sensores satelitales <strong>Copernicus (DEM GLO-30, ESA WorldCover 10 m, Sentinel-2 L2A y Sentinel-1 SAR)</strong> recortadas visualmente con el perímetro de <strong>{esc(territory_label)}</strong>, junto con la guía para interpretar cada color de la leyenda.</p>
+        </div>
+      </div>
+
+      <div class="atlas-plate-tabs" role="tablist" aria-label="Láminas temáticas del Atlas Copernicus">
+        {"".join(tabs_html)}
+      </div>
+
+      <div class="atlas-copernicus-shell">
+        <div class="atlas-copernicus-map-col">
+          <div class="geovisor-toolbar" style="border-radius:0;">
+            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.55rem;">
+              <strong id="atlas-toolbar-plate-label" style="font-size:0.84rem;color:var(--c-accent-yellow);">⛰️ 1. Geomorfología y Pendientes (DEM 30 m)</strong>
+              <label style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.78rem;background:rgba(255,255,255,0.12);padding:0.2rem 0.5rem;border-radius:4px;cursor:pointer;">
+                <input type="checkbox" id="atlas-toggle-mask" checked>
+                <span>Enmascarar con límite de zona de estudio</span>
+              </label>
+              <label style="display:inline-flex;align-items:center;gap:0.35rem;font-size:0.75rem;">
+                <span>Máscara:</span>
+                <input type="range" id="atlas-mask-opacity" min="0" max="1" step="0.05" value="0.88" style="width:75px;" aria-label="Opacidad de la máscara del límite">
+              </label>
+            </div>
+            <div class="geovisor-toolbar-actions">
+              <button type="button" id="atlas-fit-bounds" class="btn btn-outline-light btn-xs">Encuadrar límite</button>
+              <button type="button" id="atlas-toggle-fullscreen" class="btn btn-primary btn-xs">⛶ Pantalla completa</button>
+            </div>
+          </div>
+          <div id="atlas-copernicus-map" class="atlas-copernicus-canvas" data-center="{center_attr}" data-zoom="{initial_zoom}" role="region" aria-label="Mapa del Atlas Temático Copernicus enmascarado con la zona de estudio"></div>
+        </div>
+
+        <div class="atlas-copernicus-info-col" id="atlas-plate-detail">
+          <div>
+            <span id="atlas-plate-badge" class="badge badge-lime">Lámina 1 · Dato Abierto Copernicus</span>
+            <h3 id="atlas-plate-title" style="margin:0.35rem 0 0.25rem;font-size:1.12rem;color:var(--c-brand-blue);">Geomorfología, Altitud y Pendientes Urbanas (Copernicus DEM GLO-30 · 30 m)</h3>
+            <p style="margin:0;font-size:0.8rem;color:var(--c-text-muted);"><strong>Sensor / Fuente:</strong> <span id="atlas-plate-sensor">Copernicus Digital Elevation Model (GLO-30 · 30 m)</span></p>
+            <p style="margin:0.15rem 0 0;font-size:0.78rem;color:var(--c-text-muted);"><strong>Parámetro / Expresión:</strong> <code id="atlas-plate-formula">Elevación hipsométrica + Sombreado Hillshade 30 m</code></p>
+          </div>
+
+          <div style="background:#F3F6FD;border-left:3px solid var(--c-brand-blue);padding:0.65rem 0.8rem;border-radius:4px;font-size:0.85rem;line-height:1.45;">
+            <strong style="color:var(--c-brand-blue);display:block;margin-bottom:0.2rem;">Lectura e interpretación territorial en {esc(territory_label)}:</strong>
+            <span id="atlas-plate-reading">Permite identificar la configuración topográfica sobre la cual se asienta la mancha urbana.</span>
+          </div>
+
+          <div>
+            <h4 style="margin:0 0 0.45rem;font-size:0.86rem;text-transform:uppercase;letter-spacing:0.03em;color:var(--c-brand-blue);">Guía de interpretación de los colores de la leyenda</h4>
+            <ul id="atlas-plate-swatches" class="atlas-swatch-list"></ul>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:1.4rem;">
+        <h3 style="margin:0 0 0.4rem;color:var(--c-brand-blue);">Catálogo completo de las 8 Láminas y Leyendas Cromáticas de Referencia</h3>
+        <p style="margin:0 0 0.9rem;font-size:0.88rem;color:var(--c-text-muted);">Puedes consultar o imprimir todas las leyendas cromáticas a continuación, o pulsar <strong>Ver lámina en el mapa ↑</strong> en cualquier tarjeta para cargarla en el visor interactivo:</p>
+        <div class="grid-2">
+          {"".join(cards_html)}
+        </div>
+      </div>
+    </section>
+    """
+
+
 def build_resultados_page(
     ctx: SiteContext,
     manifest: dict[str, Any],
@@ -1300,6 +1530,7 @@ def build_resultados_page(
     atlas_products: list[dict[str, Any]],
     continuidad_md: str,
     branding: dict[str, Any],
+    layers_cfg: dict[str, Any] | None = None,
 ) -> str:
     outputs_li = "".join(f"<li>{esc(o)}</li>" for o in manifest.get("expected_outputs", [])) or "<li>Productos esperados por detallar.</li>"
 
@@ -1386,8 +1617,19 @@ def build_resultados_page(
     </section>
     """
 
+    mv = (layers_cfg or {}).get("map_view", {})
+    initial_center = mv.get("initial_center", [-84.0, 10.0])
+    initial_zoom = float(mv.get("initial_zoom", 12))
+    atlas_copernicus_section = render_copernicus_study_area_atlas_section(
+        territory_label=manifest["territory"]["label"],
+        initial_center=initial_center,
+        initial_zoom=initial_zoom,
+    )
+
     body = f"""
     {render_status_strip(manifest)}
+
+    {atlas_copernicus_section}
 
     <section class="section">
       <div class="grid-2">
@@ -1428,10 +1670,11 @@ def build_resultados_page(
         ctx=ctx,
         manifest=manifest,
         repo_cfg=repo_cfg,
-        page_title="Resultados y Atlas",
+        page_title="Resultados y Atlas Copernicus",
         active_nav="resultados",
         hero_html=hero,
         body_html=body,
+        include_maplibre=True,
     )
 
 
@@ -1949,7 +2192,7 @@ def main() -> int:
     write_deterministic(out_dir / "proyecto" / "index.html", build_proyecto_page(ctx, manifest, repo_cfg, project_md, pmv_md, branding))
     write_deterministic(out_dir / "aplicacion" / "index.html", build_aplicacion_page(ctx, manifest, repo_cfg, layers_cfg, branding))
     write_deterministic(out_dir / "metodologia" / "index.html", build_metodologia_page(ctx, manifest, repo_cfg, metodologia_md, branding))
-    write_deterministic(out_dir / "resultados" / "index.html", build_resultados_page(ctx, manifest, repo_cfg, atlas_products, continuidad_md, branding))
+    write_deterministic(out_dir / "resultados" / "index.html", build_resultados_page(ctx, manifest, repo_cfg, atlas_products, continuidad_md, branding, layers_cfg))
     write_deterministic(out_dir / "colaborar" / "index.html", build_colaborar_page(ctx, manifest, repo_cfg, branding))
     write_deterministic(out_dir / "404.html", build_404_page(ctx, manifest, repo_cfg))
 

@@ -1473,6 +1473,200 @@ tr:last-child td {
   gap: 0.5rem;
 }
 
+/* ==========================================================================
+   Leyenda interactiva flotante en el Geovisor (Map Stage Legend)
+   ========================================================================== */
+.geovisor-map-legend {
+  position: absolute;
+  bottom: 42px;
+  left: 12px;
+  max-width: 340px;
+  max-height: calc(100% - 95px);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(6px);
+  border: 1px solid #CBD5E1;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.18);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: all 0.25s ease;
+  font-size: 0.78rem;
+  color: var(--c-text);
+}
+
+.geovisor-map-legend.is-collapsed .gv-legend-body {
+  display: none;
+}
+
+.gv-legend-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.45rem 0.65rem;
+  background: var(--c-brand-blue);
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 0.77rem;
+  border-bottom: 2px solid var(--c-accent-yellow);
+}
+
+.gv-legend-title {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gv-legend-toggle-btn {
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #FFFFFF;
+  border-radius: 3px;
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 0;
+  transition: background 0.15s ease;
+}
+
+.gv-legend-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.gv-legend-body {
+  padding: 0.5rem 0.65rem;
+  overflow-y: auto;
+  max-height: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.gv-legend-layer-card {
+  padding: 0.45rem 0.5rem;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+}
+
+.gv-legend-layer-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.4rem;
+  margin-bottom: 0.35rem;
+}
+
+.gv-legend-layer-name {
+  font-weight: 700;
+  font-size: 0.77rem;
+  color: var(--c-brand-blue);
+}
+
+.gv-legend-scheme-badge {
+  font-size: 0.66rem;
+  font-weight: 600;
+  color: var(--c-teal);
+  background: #E6FFFA;
+  border: 1px solid #B2F5EA;
+  padding: 0.1rem 0.32rem;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.gv-legend-swatches-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.22rem;
+}
+
+.gv-legend-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  line-height: 1.25;
+}
+
+.gv-legend-color-box {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid rgba(15, 23, 42, 0.3);
+  flex-shrink: 0;
+}
+
+.gv-legend-chip-label {
+  color: var(--c-text);
+}
+
+/* Pills para selección rápida de esquemas */
+.gv-scheme-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.35rem;
+  margin-bottom: 0.35rem;
+}
+
+.gv-scheme-pill {
+  padding: 0.18rem 0.45rem;
+  font-size: 0.69rem;
+  font-weight: 600;
+  background: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  border-radius: 4px;
+  color: var(--c-text);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1.2;
+}
+
+.gv-scheme-pill:hover {
+  background: #F1F5F9;
+  border-color: var(--c-teal);
+  color: var(--c-teal);
+}
+
+.gv-scheme-pill.is-active {
+  background: var(--c-teal);
+  border-color: var(--c-teal);
+  color: #FFFFFF;
+}
+
+/* Selector de escenarios temáticos */
+.gv-scenario-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  text-align: left;
+  justify-content: flex-start;
+  width: 100%;
+  font-size: 0.74rem;
+  padding: 0.32rem 0.55rem;
+  border-radius: 5px;
+  transition: all 0.15s ease;
+}
+
+.gv-scenario-btn.is-active {
+  background: var(--c-teal);
+  border-color: var(--c-teal);
+  color: #FFFFFF;
+  font-weight: 700;
+  box-shadow: 0 1px 4px rgba(0, 127, 139, 0.25);
+}
+
 .dropzone {
   border: 2px dashed var(--c-brand-blue);
   border-radius: var(--radius-md);

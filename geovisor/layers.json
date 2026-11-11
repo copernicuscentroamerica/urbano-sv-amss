@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "project_id": "sv-amss",
-  "title": "AMSS: expansión urbana y transformación del suelo",
+  "title": "AMSS: expansión urbana y transformación del valor del suelo",
   "country": {
     "code": "SV",
     "name": "El Salvador"
@@ -13,13 +13,13 @@
     ],
     "zoom": 10.8,
     "declared_centroid": [
-      -89.31432,
-      13.61892
+      -89.2182,
+      13.6989
     ],
     "is_referential": false,
-    "reference_note": "Límites y perímetro oficial de distritos y nuevos municipios del AMSS incorporados.",
-    "area_declared": "165.107 ha (≈ 1.651 km²) en 14 distritos del AMSS según S10.",
-    "scale_label": "Área urbana metropolitana / conurbación (14 distritos)"
+    "reference_note": "Unidades de Planificación Detallada (UPD) consolidadas con registros de permisos de OPAMSS (2007–2019 y 2020–2026), precios de oferta inmobiliaria 2025 (web scraping / LISA) y límites distritales del AMSS.",
+    "area_declared": "165.107 ha (≈ 1.651 km²) en 14 distritos y 426 UPD consolidadas.",
+    "scale_label": "Área urbana metropolitana / Unidades de Planificación Detallada (UPD)"
   },
   "geolibre_integration": {
     "web_app_base_url": "https://web.geolibre.app/",
@@ -28,10 +28,10 @@
     "supports_local_geojson_preview": true
   },
   "planned_controls": [
-    "Selector temporal de huella urbana (línea base 2015/2020 frente a corte 2026) y comparador de cortina (swipe).",
-    "Filtro espacial por los 14 distritos del AMSS y Unidades de Planificación Detallada (UPD 2025).",
-    "Conmutador de rangos de valor del suelo interpolados (manteniendo explícita la unidad USD/m² o USD/v² y el RMSE).",
-    "Panel comparativo entre expansión de mancha urbana, densidad de permisos históricos (1990–2026) y tipologías de expansión."
+    "Selector interactivo de esquemas de leyenda coroplética: Escala Homologada Comparable (USD), Quintiles (P20–P80), Rupturas Naturales (Jenks), Mediana Robusta y Dinámica/LISA.",
+    "Comparación multitemporal del valor del suelo por UPD según permisos de OPAMSS: corte histórico 2007–2019 (P1_PROM) frente al corte reciente 2020–2026 (P2_PROM) y tendencia interperíodo.",
+    " Contraste con precios de mercado 2025 obtenidos por web scraping inmobiliario (promedio_2025) y clusters de autocorrelación espacial de Moran Local (LISA).",
+    "Filtro espacial por los 14 distritos del AMSS y 426 Unidades de Planificación Detallada (UPD)."
   ],
   "external_references": [
     {
@@ -42,6 +42,90 @@
     }
   ],
   "layers": [
+    {
+      "id": "sv-amss-lisa-precios-2025",
+      "title": "Precios de oferta inmobiliaria 2025 y análisis LISA (Web Scraping · promedio_2025)",
+      "group": "Mercado y gestión del suelo",
+      "format": "geojson",
+      "geometry_type": "polygon",
+      "status": "publicado",
+      "source_path": "geovisor/capas/LISA_PRECIOS_2025.geojson",
+      "expected_file_hint": "geovisor/capas/LISA_PRECIOS_2025.geojson",
+      "resolution": "265 UPD con oferta inmobiliaria 2025 (EPSG:4326)",
+      "style": {
+        "fill_color": "auto_lisa_2025",
+        "fill_opacity": 0.76,
+        "stroke_color": "#1E293B",
+        "stroke_width": 0.9,
+        "visible_by_default": true,
+        "thematic_field": "promedio_2025",
+        "default_scheme": "homologated"
+      },
+      "caveat": "Obtenido mediante web scraping de portales inmobiliarios (2025). Campo principal: promedio_2025 (truncado en Shapefile como promedio_2) e indicadores LISA (cuadrante_, moran_loca, p_perm_loc)."
+    },
+    {
+      "id": "sv-amss-upd-2020-2026",
+      "title": "Valor promedio del suelo 2020–2026 por UPD (Permisos OPAMSS · P2_PROM)",
+      "group": "Mercado y gestión del suelo",
+      "format": "geojson",
+      "geometry_type": "polygon",
+      "status": "publicado",
+      "source_path": "geovisor/capas/upd_consolidado.geojson",
+      "expected_file_hint": "geovisor/capas/upd_consolidado.geojson",
+      "resolution": "426 UPD consolidadas · 145 con permisos 2020–2026 (EPSG:4326)",
+      "style": {
+        "fill_color": "auto_upd_2020_2026",
+        "fill_opacity": 0.76,
+        "stroke_color": "#14283F",
+        "stroke_width": 0.85,
+        "visible_by_default": false,
+        "thematic_field": "P2_PROM",
+        "default_scheme": "homologated"
+      },
+      "caveat": "Valor de suelo a partir de registros de permisos de OPAMSS (período 2020–2026, campo P2_PROM y mediana P2_MED; 145 UPD con muestra activa y 281 sin trámites en el período)."
+    },
+    {
+      "id": "sv-amss-upd-2007-2019",
+      "title": "Valor promedio del suelo 2007–2019 por UPD (Permisos OPAMSS · P1_PROM)",
+      "group": "Mercado y gestión del suelo",
+      "format": "geojson",
+      "geometry_type": "polygon",
+      "status": "publicado",
+      "source_path": "geovisor/capas/upd_consolidado.geojson",
+      "expected_file_hint": "geovisor/capas/upd_consolidado.geojson",
+      "resolution": "426 UPD consolidadas · 157 con permisos 2007–2019 (EPSG:4326)",
+      "style": {
+        "fill_color": "auto_upd_2007_2019",
+        "fill_opacity": 0.76,
+        "stroke_color": "#14283F",
+        "stroke_width": 0.85,
+        "visible_by_default": false,
+        "thematic_field": "P1_PROM",
+        "default_scheme": "homologated"
+      },
+      "caveat": "Valor de suelo a partir de registros de permisos de OPAMSS (período 2007–2019, campo P1_PROM y mediana P1_MED; incluye opción de control de 4 valores extremos > $7.000)."
+    },
+    {
+      "id": "sv-amss-upd-tendencia",
+      "title": "Dinámica y variación de valor del suelo 2007–2019 vs. 2020–2026 (OPAMSS · TENDENCIA / PCT_VAR)",
+      "group": "Síntesis para planificación",
+      "format": "geojson",
+      "geometry_type": "polygon",
+      "status": "publicado",
+      "source_path": "geovisor/capas/upd_consolidado.geojson",
+      "expected_file_hint": "geovisor/capas/upd_consolidado.geojson",
+      "resolution": "426 UPD consolidadas (EPSG:4326)",
+      "style": {
+        "fill_color": "auto_upd_tendencia",
+        "fill_opacity": 0.74,
+        "stroke_color": "#14283F",
+        "stroke_width": 0.85,
+        "visible_by_default": false,
+        "thematic_field": "TENDENCIA",
+        "default_scheme": "diverging"
+      },
+      "caveat": "Síntesis interperíodo de permisos OPAMSS: Aumento (79 UPD), Disminución (37 UPD), Solo 2020–2026 (30 UPD), Solo 2007–2019 (41 UPD) y Sin datos (239 UPD)."
+    },
     {
       "id": "sv-amss-perimetro-distritos",
       "title": "Límite oficial de los distritos del AMSS y nuevos municipios",
@@ -54,9 +138,11 @@
       "resolution": "Vectorial oficial OPAMSS (EPSG:4326)",
       "style": {
         "fill_color": "#007F8B",
-        "fill_opacity": 0.2,
+        "fill_opacity": 0.04,
         "stroke_color": "#14283F",
-        "stroke_width": 2
+        "stroke_width": 1.8,
+        "visible_by_default": true,
+        "interactive_fill": false
       },
       "caveat": "Capa oficial de distritos y nuevos municipios del AMSS (incorporada desde nuevos_municipios_amss)."
     },
@@ -72,83 +158,13 @@
       "resolution": "Vectorial oficial OPAMSS (EPSG:4326)",
       "style": {
         "fill_color": "#14283F",
-        "fill_opacity": 0.05,
+        "fill_opacity": 0.02,
         "stroke_color": "#C9DA4D",
-        "stroke_width": 2.5
+        "stroke_width": 2.5,
+        "visible_by_default": true,
+        "interactive_fill": false
       },
       "caveat": "Perímetro exterior de los nuevos municipios del AMSS."
-    },
-    {
-      "id": "sv-amss-expansion-urbana",
-      "title": "Huella y expansión urbana multitemporal (Sentinel-2 / GHSL)",
-      "group": "Dinámica física",
-      "format": "geojson",
-      "geometry_type": "polygon",
-      "status": "en_preparacion",
-      "source_path": null,
-      "expected_file_hint": "geovisor/capas/amss_expansion_urbana.geojson",
-      "resolution": "10 m (Sentinel-2)",
-      "style": {
-        "fill_color": "#007F8B",
-        "fill_opacity": 0.45,
-        "stroke_color": "#005a63",
-        "stroke_width": 1
-      },
-      "caveat": "Pendiente de validación topológica sin solapes ni huecos sobre los 14 distritos."
-    },
-    {
-      "id": "sv-amss-isovalores-suelo",
-      "title": "Rangos interpolados de valor del suelo (isovalores agregados)",
-      "group": "Mercado y gestión del suelo",
-      "format": "geojson",
-      "geometry_type": "polygon",
-      "status": "en_preparacion",
-      "source_path": null,
-      "expected_file_hint": "geovisor/capas/amss_rangos_valor_suelo.geojson",
-      "resolution": "Polígonos reclasificados con RMSE documentado",
-      "style": {
-        "fill_color": "#C9DA4D",
-        "fill_opacity": 0.5,
-        "stroke_color": "#14283F",
-        "stroke_width": 1
-      },
-      "caveat": "Basado en trámites y web scraping 2025 de cobertura parcial; distinguir zonas sin muestra suficiente y no exponer datos personales de expedientes."
-    },
-    {
-      "id": "sv-amss-tipologias-expansion",
-      "title": "Tipologías de expansión urbana e inversión territorial",
-      "group": "Síntesis para planificación",
-      "format": "geojson",
-      "geometry_type": "polygon",
-      "status": "en_preparacion",
-      "source_path": null,
-      "expected_file_hint": "geovisor/capas/amss_tipologias.geojson",
-      "resolution": "Agregación por distrito / UPD",
-      "style": {
-        "fill_color": "#e6ab02",
-        "fill_opacity": 0.45,
-        "stroke_color": "#14283F",
-        "stroke_width": 1.2
-      },
-      "caveat": "Sujeto a revisión técnica y acta de validación del Product Owner en OPAMSS."
-    },
-    {
-      "id": "sv-amss-upd-consolidado",
-      "title": "UPD AMSS Consolidado: Valores de suelo, equipamientos y permisos de construcción",
-      "group": "Mercado y gestión del suelo",
-      "format": "geojson",
-      "geometry_type": "polygon",
-      "status": "publicado",
-      "source_path": "geovisor/capas/upd_consolidado.geojson",
-      "expected_file_hint": "geovisor/capas/upd_consolidado.geojson",
-      "resolution": "Vectorial oficial OPAMSS (426 UPD, EPSG:4326)",
-      "style": {
-        "fill_color": "#fc8d59",
-        "fill_opacity": 0.45,
-        "stroke_color": "#14283F",
-        "stroke_width": 1.5
-      },
-      "caveat": "Capa consolidada con 426 UPD del AMSS que integra demografía (habitantes y viviendas), valores de suelo (P2_PROM USD/v²), equipamientos educativos (CANT_EDU), equipamientos de salud (CANT_SALUD), espacio público recreativo (EP_REC_M2) y permisos de construcción (PC_07_19, PC_20_26)."
     }
   ]
 }

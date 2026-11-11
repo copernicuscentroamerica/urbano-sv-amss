@@ -245,12 +245,33 @@ def render_shell(
 
 def make_geolibre_layer_style(raw_style: dict[str, Any] | None) -> dict[str, Any]:
     s = raw_style or {}
-    fill_color = str(s.get("fillColor") or "#0d9488")
-    stroke_color = str(s.get("lineColor") or s.get("strokeColor") or "#115e59")
-    stroke_width = float(s.get("lineWidth") or s.get("strokeWidth") or 2)
-    fill_opacity = float(s.get("fillOpacity") if s.get("fillOpacity") is not None else 0.35)
+    raw_fc = str(s.get("fillColor") or s.get("fill_color") or "#0d9488")
+    fill_color = "#e34a33" if raw_fc.startswith("auto_") else raw_fc
+    stroke_color = str(s.get("lineColor") or s.get("strokeColor") or s.get("stroke_color") or "#115e59")
+    stroke_width = float(s.get("lineWidth") or s.get("strokeWidth") or s.get("stroke_width") or 2)
+    fill_opacity = float(
+        s.get("fillOpacity")
+        if s.get("fillOpacity") is not None
+        else (s.get("fill_opacity") if s.get("fill_opacity") is not None else 0.35)
+    )
     circle_radius = float(s.get("circleRadius") or 6)
     circle_color = str(s.get("circleColor") or fill_color)
+    thematic_prop = str(s.get("thematic_field") or "")
+    vec_mode = "graduated" if raw_fc in ("auto_lisa_2025", "auto_upd_2020_2026", "auto_upd_2007_2019") else "single"
+    vec_stops = (
+        [
+            {"value": 0, "color": "#FEF0D9"},
+            {"value": 50, "color": "#FDCC8A"},
+            {"value": 100, "color": "#FC8D59"},
+            {"value": 175, "color": "#E34A33"},
+            {"value": 300, "color": "#B30000"},
+        ]
+        if vec_mode == "graduated"
+        else [
+            {"value": 0, "color": "#dbeafe"},
+            {"value": 1, "color": fill_color},
+        ]
+    )
     return {
         "minZoom": 0,
         "maxZoom": 24,
@@ -311,15 +332,12 @@ def make_geolibre_layer_style(raw_style: dict[str, Any] | None) -> dict[str, Any
         "elevation3dEnabled": False,
         "elevation3dVerticalScale": 1,
         "elevation3dOffset": 0,
-        "vectorStyleMode": "single",
-        "vectorStyleProperty": "",
+        "vectorStyleMode": vec_mode,
+        "vectorStyleProperty": thematic_prop,
         "vectorStyleClassCount": 5,
-        "vectorStyleColorRamp": "viridis",
-        "vectorStyleClassificationScheme": "equal-interval",
-        "vectorStyleStops": [
-            {"value": 0, "color": "#dbeafe"},
-            {"value": 1, "color": fill_color},
-        ],
+        "vectorStyleColorRamp": "orrd" if vec_mode == "graduated" else "viridis",
+        "vectorStyleClassificationScheme": "manual" if vec_mode == "graduated" else "equal-interval",
+        "vectorStyleStops": vec_stops,
         "vectorStyleExpression": "",
         "vectorRules": [],
         "proportionalSizeEnabled": False,
@@ -875,8 +893,9 @@ def build_aplicacion_page(
         for lyr in items:
             lid = lyr["id"]
             is_ready = bool(lyr.get("source_path")) and lyr.get("status") in ("publicado", "en_revision")
+            vis_default = not (isinstance(lyr.get("style"), dict) and lyr["style"].get("visible_by_default") is False)
             disabled_attr = "" if is_ready else " disabled"
-            checked_attr = " checked" if is_ready else ""
+            checked_attr = " checked" if (is_ready and vis_default) else ""
             hint_html = (
                 f'<div class="layer-item-meta">Ruta esperada para activar: <code>{esc(lyr.get("expected_file_hint"))}</code></div>'
                 if not is_ready and lyr.get("expected_file_hint")
@@ -887,6 +906,82 @@ def build_aplicacion_page(
                 if lyr.get("caveat")
                 else ""
             )
+            fc_spec = str((lyr.get("style") or {}).get("fill_color") or "")
+            scheme_selector_html = ""
+            if fc_spec == "auto_lisa_2025":
+                scheme_selector_html = f"""
+                <div style="margin-top:0.45rem;padding:0.45rem 0.55rem;background:#F8FAFC;border:1px solid var(--c-border);border-radius:6px;">
+                  <label for="sch-{esc(lid)}" style="display:block;font-size:0.74rem;font-weight:700;color:var(--c-brand-blue);margin-bottom:0.25rem;">🎨 Opciones de visualización (promedio_2025 / LISA):</label>
+                  <select id="sch-{esc(lid)}" data-layer-scheme="{esc(lid)}" style="width:100%;font-size:0.75rem;padding:0.25rem 0.35rem;border:1px solid var(--c-border);border-radius:4px;margin-bottom:0.35rem;">
+                    <option value="homologated">Opción 1 · Escala Homologada Comparable (5 rangos USD: ≤$50 a &gt;$300)</option>
+                    <option value="quantiles">Opción 2 · Quintiles de Mercado 2025 (P20, P40, P60, P80 · 53 UPD/clase)</option>
+                    <option value="jenks">Opción 3 · Rupturas Naturales (Jenks 5 clases)</option>
+                    <option value="lisa_quadrants">Opción 4 · Cuadrantes LISA de Moran (Alto-Alto, Bajo-Bajo, etc.)</option>
+                    <option value="lisa_sig">Opción 5 · Clusters Significativos LISA (p_perm_loc ≤ 0.05)</option>
+                  </select>
+                  <div class="gv-scheme-pills" data-pill-layer="{esc(lid)}">
+                    <button type="button" class="gv-scheme-pill is-active" data-scheme-val="homologated" title="Escala Homologada (≤$50 a >$300 USD)">Homologada (USD)</button>
+                    <button type="button" class="gv-scheme-pill" data-scheme-val="quantiles" title="5 Quintiles de igual frecuencia">Quintiles</button>
+                    <button type="button" class="gv-scheme-pill" data-scheme-val="jenks" title="Rupturas Naturales Jenks">Jenks</button>
+                    <button type="button" class="gv-scheme-pill" data-scheme-val="lisa_quadrants" title="Cuadrantes Espaciales LISA">Cuadrantes LISA</button>
+                    <button type="button" class="gv-scheme-pill" data-scheme-val="lisa_sig" title="Clusters Significativos p ≤ 0.05">Clusters p≤0.05</button>
+                  </div>
+                  <div data-layer-swatches="{esc(lid)}" style="display:flex;flex-wrap:wrap;gap:0.25rem;margin-top:0.35rem;"></div>
+                </div>
+                """
+            elif fc_spec == "auto_upd_2020_2026":
+                scheme_selector_html = f"""
+                <div style="margin-top:0.45rem;padding:0.45rem 0.55rem;background:#F8FAFC;border:1px solid var(--c-border);border-radius:6px;">
+                  <label for="sch-{esc(lid)}" style="display:block;font-size:0.74rem;font-weight:700;color:var(--c-brand-blue);margin-bottom:0.25rem;">🎨 Opciones de visualización 2020–2026 (P2_PROM / P2_MED):</label>
+                  <select id="sch-{esc(lid)}" data-layer-scheme="{esc(lid)}" style="width:100%;font-size:0.75rem;padding:0.25rem 0.35rem;border:1px solid var(--c-border);border-radius:4px;margin-bottom:0.35rem;">
+                    <option value="homologated">Opción 1 · Escala Homologada Comparable (5 rangos USD: ≤$50 a &gt;$300)</option>
+                    <option value="quantiles">Opción 2 · Quintiles 2020–2026 (P20, P40, P60, P80 · P2_PROM)</option>
+                    <option value="jenks">Opción 3 · Rupturas Naturales (Jenks 5 clases · P2_PROM)</option>
+                    <option value="median">Opción 4 · Mediana Robusta 2020–2026 (P2_MED)</option>
+                  </select>
+                  <div class="gv-scheme-pills" data-pill-layer="{esc(lid)}">
+                    <button type="button" class="gv-scheme-pill is-active" data-scheme-val="homologated" title="Escala Homologada (≤$50 a >$300 USD)">Homologada (USD)</button>
+                    <button type="button" class="gv-scheme-pill" data-scheme-val="quantiles" title="5 Quintiles 2020–2026">Quintiles</button>
+                    <button type="button" class="gv-scheme-pill" data-scheme-val="jenks" title="Rupturas Naturales Jenks">Jenks</button>
+                    <button type="button" class="gv-scheme-pill" data-scheme-val="median" title="Mediana Robusta P2_MED">Mediana Robusta</button>
+                  </div>
+                  <div data-layer-swatches="{esc(lid)}" style="display:flex;flex-wrap:wrap;gap:0.25rem;margin-top:0.35rem;"></div>
+                </div>
+                """
+            elif fc_spec == "auto_upd_2007_2019":
+                scheme_selector_html = f"""
+                <div style="margin-top:0.45rem;padding:0.45rem 0.55rem;background:#F8FAFC;border:1px solid var(--c-border);border-radius:6px;">
+                  <label for="sch-{esc(lid)}" style="display:block;font-size:0.74rem;font-weight:700;color:var(--c-brand-blue);margin-bottom:0.25rem;">🎨 Opciones de visualización 2007–2019 (P1_PROM / P1_MED):</label>
+                  <select id="sch-{esc(lid)}" data-layer-scheme="{esc(lid)}" style="width:100%;font-size:0.75rem;padding:0.25rem 0.35rem;border:1px solid var(--c-border);border-radius:4px;margin-bottom:0.35rem;">
+                    <option value="homologated">Opción 1 · Escala Homologada Comparable (5 rangos USD: ≤$50 a &gt;$300)</option>
+                    <option value="quantiles">Opción 2 · Quintiles 2007–2019 (P20, P40, P60, P80 · P1_PROM)</option>
+                    <option value="jenks">Opción 3 · Rupturas Naturales (Jenks con control de outliers)</option>
+                    <option value="median">Opción 4 · Mediana Robusta 2007–2019 (P1_MED · sin sesgo atípico)</option>
+                  </select>
+                  <div class="gv-scheme-pills" data-pill-layer="{esc(lid)}">
+                    <button type="button" class="gv-scheme-pill is-active" data-scheme-val="homologated" title="Escala Homologada (≤$50 a >$300 USD)">Homologada (USD)</button>
+                    <button type="button" class="gv-scheme-pill" data-scheme-val="quantiles" title="5 Quintiles 2007–2019">Quintiles</button>
+                    <button type="button" class="gv-scheme-pill" data-scheme-val="jenks" title="Rupturas Naturales Jenks con control de outliers">Jenks (Outliers)</button>
+                    <button type="button" class="gv-scheme-pill" data-scheme-val="median" title="Mediana Robusta P1_MED">Mediana Robusta</button>
+                  </div>
+                  <div data-layer-swatches="{esc(lid)}" style="display:flex;flex-wrap:wrap;gap:0.25rem;margin-top:0.35rem;"></div>
+                </div>
+                """
+            elif fc_spec == "auto_upd_tendencia":
+                scheme_selector_html = f"""
+                <div style="margin-top:0.45rem;padding:0.45rem 0.55rem;background:#F8FAFC;border:1px solid var(--c-border);border-radius:6px;">
+                  <label for="sch-{esc(lid)}" style="display:block;font-size:0.74rem;font-weight:700;color:var(--c-brand-blue);margin-bottom:0.25rem;">🎨 Opciones de visualización de cambio (TENDENCIA / PCT_VAR):</label>
+                  <select id="sch-{esc(lid)}" data-layer-scheme="{esc(lid)}" style="width:100%;font-size:0.75rem;padding:0.25rem 0.35rem;border:1px solid var(--c-border);border-radius:4px;margin-bottom:0.35rem;">
+                    <option value="diverging">Opción 1 · Categorías de Tendencia (Aumento / Disminución / Cobertura)</option>
+                    <option value="pct_var">Opción 2 · Variación Porcentual Divergente (PCT_VAR %)</option>
+                  </select>
+                  <div class="gv-scheme-pills" data-pill-layer="{esc(lid)}">
+                    <button type="button" class="gv-scheme-pill is-active" data-scheme-val="diverging" title="Categorías de Tendencia: Aumento / Disminución / Cobertura">Categorías (TENDENCIA)</button>
+                    <button type="button" class="gv-scheme-pill" data-scheme-val="pct_var" title="Tasa de Variación Porcentual Divergente (PCT_VAR %)">Variación % (PCT_VAR)</button>
+                  </div>
+                  <div data-layer-swatches="{esc(lid)}" style="display:flex;flex-wrap:wrap;gap:0.25rem;margin-top:0.35rem;"></div>
+                </div>
+                """
             items_html.append(
                 f"""
                 <div class="layer-item">
@@ -901,8 +996,9 @@ def build_aplicacion_page(
                   {hint_html}
                   <div class="layer-item-meta" style="display:flex;align-items:center;gap:0.5rem;margin-top:0.35rem;">
                     <label for="op-{esc(lid)}">Opacidad:</label>
-                    <input id="op-{esc(lid)}" type="range" min="0.1" max="1" step="0.05" value="0.55" data-layer-opacity="{esc(lid)}"{disabled_attr}>
+                    <input id="op-{esc(lid)}" type="range" min="0.1" max="1" step="0.05" value="0.75" data-layer-opacity="{esc(lid)}"{disabled_attr}>
                   </div>
+                  {scheme_selector_html}
                   {caveat_html}
                 </div>
                 """
@@ -996,6 +1092,32 @@ def build_aplicacion_page(
           </div>
 
           <div class="geovisor-panel is-active" data-gv-panel="layers">
+            <div class="gv-scenario-selector" style="margin-bottom:0.75rem;padding:0.6rem;background:#EEF2FF;border:1px solid #C7D2FE;border-radius:8px;">
+              <div style="font-size:0.76rem;font-weight:700;color:#1E3A8A;margin-bottom:0.35rem;display:flex;align-items:center;justify-content:space-between;">
+                <span>🎯 Comparativa Rápida de Suelo Urbano</span>
+                <span class="badge badge-primary" style="font-size:0.65rem;">1-Clic</span>
+              </div>
+              <p style="font-size:0.72rem;color:#334155;margin:0 0 0.45rem 0;line-height:1.35;">
+                Selecciona un escenario analítico para activar automáticamente la capa y el esquema temático correspondiente:
+              </p>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.35rem;">
+                <button type="button" class="btn btn-primary btn-xs gv-scenario-btn is-active" data-gv-scenario="mercado-2025-homol" title="Web Scraping 2025 en escala comparable (≤$50 a >$300 USD)">
+                  🛒 Mercado 2025 (Homologado)
+                </button>
+                <button type="button" class="btn btn-outline btn-xs gv-scenario-btn" data-gv-scenario="mercado-2025-lisa" title="Clusters Espaciales LISA Moran (p ≤ 0.05)">
+                  🔥 Clusters LISA 2025 (Moran)
+                </button>
+                <button type="button" class="btn btn-outline btn-xs gv-scenario-btn" data-gv-scenario="opamss-p2-homol" title="Permisos OPAMSS 2020-2026 en escala comparable">
+                  📑 OPAMSS 2020–2026 (Homol.)
+                </button>
+                <button type="button" class="btn btn-outline btn-xs gv-scenario-btn" data-gv-scenario="opamss-p1-homol" title="Permisos OPAMSS 2007-2019 en escala comparable">
+                  🏛️ OPAMSS 2007–2019 (Homol.)
+                </button>
+                <button type="button" class="btn btn-outline btn-xs gv-scenario-btn" data-gv-scenario="opamss-tendencia" title="Tendencia de cambio entre periodos de permisos OPAMSS" style="grid-column: span 2;">
+                  📈 Dinámica / Tendencia (2007–19 vs 2020–26)
+                </button>
+              </div>
+            </div>
             <div class="filter-field" style="margin-bottom:0.5rem;">
               <label for="gv-basemap-select">Catálogo de Mapas Base Copernicus y Derivados (23 capas abiertas)</label>
               <select id="gv-basemap-select">
@@ -1132,7 +1254,17 @@ def build_aplicacion_page(
               <a id="btn-open-geolibre-studio" class="btn btn-primary btn-xs" href="{html.escape(studio_open_href, quote=True)}" target="_blank" rel="noopener noreferrer">Abrir en GeoLibre Studio ↗</a>
             </div>
           </div>
-          <div id="geovisor-map-canvas" class="geovisor-canvas" role="region" aria-label="Mapa interactivo del proyecto"></div>
+          <div id="geovisor-map-canvas" class="geovisor-canvas" role="region" aria-label="Mapa interactivo del proyecto">
+            <div id="gv-floating-legend" class="geovisor-map-legend" aria-live="polite">
+              <div class="gv-legend-header">
+                <span class="gv-legend-title" id="gv-legend-title">🗺️ Leyenda del mapa</span>
+                <button type="button" id="gv-legend-toggle" class="gv-legend-toggle-btn" aria-label="Minimizar leyenda" title="Minimizar o expandir leyenda">−</button>
+              </div>
+              <div id="gv-legend-body" class="gv-legend-body">
+                <div style="font-size:0.72rem;color:var(--c-text-muted);">Cargando simbología...</div>
+              </div>
+            </div>
+          </div>
           <iframe id="geolibre-embed-iframe" class="geovisor-iframe" title="Visor GeoLibre embebido" allowfullscreen loading="lazy"></iframe>
           <div class="geovisor-statusbar">
             <span id="gv-coords-readout">Encuadre referencial inicial: Lat {mv.get('center', [0, 0])[1]:.4f} · Lon {mv.get('center', [0, 0])[0]:.4f}</span>
@@ -2294,6 +2426,12 @@ def main() -> int:
         out_dir / "geovisor" / "proyecto.geolibre.json",
         json.dumps(geolibre_obj, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
     )
+    repo_geolibre = ROOT / "geovisor" / "proyecto.geolibre.json"
+    if repo_geolibre.parent.exists():
+        write_deterministic(
+            repo_geolibre,
+            json.dumps(geolibre_obj, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        )
     data_layers_dir = ROOT / "geovisor" / "data"
     if data_layers_dir.exists():
         (out_dir / "geovisor" / "data").mkdir(parents=True, exist_ok=True)

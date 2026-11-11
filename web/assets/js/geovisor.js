@@ -1189,19 +1189,50 @@
 
     function attachFeatureClickPopup(layerId, badgeTitle, defaultTitle) {
       mapInstance.on("click", layerId, function (e) {
+        if (e.originalEvent && e.originalEvent._gvPopupHandled) return;
         if (!e.features || !e.features.length) return;
+        if (e.originalEvent) e.originalEvent._gvPopupHandled = true;
         var props = e.features[0].properties || {};
-        var nameVal = props.nombre || props.name || props.NAM || defaultTitle;
+        var nameVal = props.nombre || props.NAME_UPD || props.name || props.NAM || defaultTitle;
         var rows = [];
-        Object.keys(props).forEach(function (k) {
-          if (k === "nombre" || k === "name") return;
-          if (props[k] !== null && props[k] !== undefined && String(props[k]).trim() !== "") {
-            rows.push([k, String(props[k])]);
+        if (props.promedio_2025 !== undefined && props.promedio_2025 !== null) {
+          rows.push(["Precio promedio 2025 (Web Scraping)", "$" + Number(props.promedio_2025).toFixed(2) + " USD"]);
+          if (props.rango_2025) rows.push(["Rango homologado 2025", String(props.rango_2025)]);
+          if (props.cuadrante_) rows.push(["Cuadrante LISA (Moran)", String(props.cuadrante_)]);
+          if (props.cluster_p05) rows.push(["Significancia LISA (p≤0.05)", String(props.cluster_p05)]);
+          if (props.moran_loca !== undefined) rows.push(["I de Moran Local", String(props.moran_loca) + " (p=" + props.p_perm_loc + ")"]);
+          if (props.z_precio !== undefined) rows.push(["Z-Score / Log Precio", "Z=" + props.z_precio + " · ln=" + props.log_precio]);
+          if (props.nomb_distr) rows.push(["Distrito / Municipio", props.nomb_distr + " · " + (props.nomb_mun || "")]);
+        } else if (props.NAME_UPD !== undefined && (props.P1_N !== undefined || props.P2_N !== undefined)) {
+          var p1Txt = (props.P1_PROM !== undefined && props.P1_PROM !== null && Number(props.P1_N) > 0)
+            ? "$" + Number(props.P1_PROM).toFixed(2) + " USD (Mediana: $" + Number(props.P1_MED || 0).toFixed(2) + " · n=" + props.P1_N + ")"
+            : "Sin permisos (n=0)";
+          var p2Txt = (props.P2_PROM !== undefined && props.P2_PROM !== null && Number(props.P2_N) > 0)
+            ? "$" + Number(props.P2_PROM).toFixed(2) + " USD (Mediana: $" + Number(props.P2_MED || 0).toFixed(2) + " · n=" + props.P2_N + ")"
+            : "Sin permisos (n=0)";
+          rows.push(["Valor suelo 2007–2019 (P1_PROM)", p1Txt]);
+          rows.push(["Valor suelo 2020–2026 (P2_PROM)", p2Txt]);
+          if (props.TENDENCIA) {
+            var varTxt = props.TENDENCIA;
+            if (props.PCT_VAR !== undefined && props.PCT_VAR !== null) {
+              varTxt += " (" + (Number(props.PCT_VAR) > 0 ? "+" : "") + Number(props.PCT_VAR).toFixed(1) + "%)";
+            }
+            rows.push(["Tendencia 2007–19 vs 2020–26", varTxt]);
           }
-        });
+          rows.push(["Permisos OPAMSS (Total)", String(props.PC_TOT || 0) + " (2007–19: " + (props.PC_07_19 || 0) + " · 2020–26: " + (props.PC_20_26 || 0) + ")"]);
+          rows.push(["Distrito / Tipología", (props.nomb_distr || "") + " (" + (props.TYPE || "") + " · " + (props.HA || 0) + " ha)"]);
+          rows.push(["Población / Vivienda UVIP", "Hab: " + (props.HAB_TOTAL || 0) + " · UVIP: " + (props.UVIP || 0)]);
+        } else {
+          Object.keys(props).forEach(function (k) {
+            if (k === "nombre" || k === "name") return;
+            if (props[k] !== null && props[k] !== undefined && String(props[k]).trim() !== "") {
+              rows.push([k, String(props[k])]);
+            }
+          });
+        }
         if (!rows.length) rows.push(["Estado", "Capa vectorial cargada"]);
-        var dom = createSafePopupElement(String(nameVal), rows.slice(0, 8), badgeTitle);
-        new window.maplibregl.Popup({ maxWidth: "320px" }).setLngLat(e.lngLat).setDOMContent(dom).addTo(mapInstance);
+        var dom = createSafePopupElement(String(nameVal), rows.slice(0, 10), badgeTitle);
+        new window.maplibregl.Popup({ maxWidth: "350px" }).setLngLat(e.lngLat).setDOMContent(dom).addTo(mapInstance);
       });
       mapInstance.on("mouseenter", layerId, function () {
         mapInstance.getCanvas().style.cursor = "pointer";
@@ -1211,7 +1242,456 @@
       });
     }
 
-    function renderGeoJsonSourceLayers(srcId, prefixId, dataOrUrl, fillColor, fillOpacity, strokeColor, strokeWidth, badgeLabel, layerTitle) {
+    function makeNumericStepExpr(propName, breaks, colors, noDataColor) {
+      var stepArr = ["step", ["coalesce", ["to-number", ["get", propName]], 0], colors[0]];
+      for (var i = 0; i < breaks.length; i++) {
+        stepArr.push(breaks[i], colors[i + 1]);
+      }
+      return [
+        "case",
+        ["all", ["has", propName], ["!=", ["get", propName], null], [">", ["to-number", ["get", propName]], 0]],
+        stepArr,
+        noDataColor || "#CBD5E1"
+      ];
+    }
+
+    var THEMATIC_SCHEMES = {
+      "auto_lisa_2025": {
+        "homologated": {
+          label: "Opción 1 · Escala Homologada Comparable (5 rangos fijos USD)",
+          expr: makeNumericStepExpr("promedio_2025", [50, 100, 175, 300], ["#FEF0D9", "#FDCC8A", "#FC8D59", "#E34A33", "#B30000"], "#CBD5E1"),
+          items: [
+            { color: "#FEF0D9", label: "Bajo (≤ $50 · 79 UPD)" },
+            { color: "#FDCC8A", label: "Medio-Bajo ($50–$100 · 55 UPD)" },
+            { color: "#FC8D59", label: "Medio ($100–$175 · 53 UPD)" },
+            { color: "#E34A33", label: "Medio-Alto ($175–$300 · 42 UPD)" },
+            { color: "#B30000", label: "Alto (> $300 · 36 UPD)" }
+          ]
+        },
+        "quantiles": {
+          label: "Opción 2 · Quintiles de Mercado 2025 (P20, P40, P60, P80 · 53 UPD/clase)",
+          expr: makeNumericStepExpr("promedio_2025", [29.61, 72.71, 125.41, 238.27], ["#FDE725", "#5EC962", "#21918C", "#3B528B", "#440154"], "#CBD5E1"),
+          items: [
+            { color: "#FDE725", label: "Q1 (≤ $29.61)" },
+            { color: "#5EC962", label: "Q2 ($29.62–$72.71)" },
+            { color: "#21918C", label: "Q3 ($72.72–$125.41)" },
+            { color: "#3B528B", label: "Q4 ($125.42–$238.27)" },
+            { color: "#440154", label: "Q5 (> $238.27 hasta $677.30)" }
+          ]
+        },
+        "jenks": {
+          label: "Opción 3 · Rupturas Naturales (Jenks 5 clases · promedio_2025)",
+          expr: makeNumericStepExpr("promedio_2025", [43.15, 101.84, 186.49, 328.02], ["#FCFBFD", "#BCBDDC", "#807DBA", "#54278F", "#2D004B"], "#CBD5E1"),
+          items: [
+            { color: "#FCFBFD", label: "$0.64 – $43.15" },
+            { color: "#BCBDDC", label: "$43.16 – $101.84" },
+            { color: "#807DBA", label: "$101.85 – $186.49" },
+            { color: "#54278F", label: "$186.50 – $328.02" },
+            { color: "#2D004B", label: "$328.03 – $677.30" }
+          ]
+        },
+        "lisa_quadrants": {
+          label: "Opción 4 · Cuadrantes de Autocorrelación Espacial LISA (cuadrante_)",
+          expr: [
+            "match",
+            ["get", "cuadrante_"],
+            "Alto-Alto", "#D7191C",
+            "Bajo-Bajo", "#2C7BB6",
+            "Bajo-Alto", "#ABD9E9",
+            "Alto-Bajo", "#FDAE61",
+            "#CBD5E1"
+          ],
+          items: [
+            { color: "#D7191C", label: "Alto-Alto · Hotspot (122 UPD)" },
+            { color: "#2C7BB6", label: "Bajo-Bajo · Coldspot (78 UPD)" },
+            { color: "#ABD9E9", label: "Bajo-Alto · Isla menor valor (33 UPD)" },
+            { color: "#FDAE61", label: "Alto-Bajo · Polo aislado (32 UPD)" }
+          ]
+        },
+        "lisa_sig": {
+          label: "Opción 5 · Clusters LISA Estadísticamente Significativos (p_perm_loc ≤ 0.05)",
+          expr: [
+            "match",
+            ["get", "cluster_p05"],
+            "Cluster Alto-Alto (p≤0.05)", "#B91C1C",
+            "Cluster Bajo-Bajo (p≤0.05)", "#1D4ED8",
+            "Cluster Bajo-Alto (p≤0.05)", "#0284C7",
+            "Cluster Alto-Bajo (p≤0.05)", "#EA580C",
+            "#E2E8F0"
+          ],
+          items: [
+            { color: "#B91C1C", label: "Hotspot Alto-Alto p≤0.05 (35 UPD)" },
+            { color: "#1D4ED8", label: "Coldspot Bajo-Bajo p≤0.05 (24 UPD)" },
+            { color: "#0284C7", label: "Atípico Bajo-Alto p≤0.05 (1 UPD)" },
+            { color: "#E2E8F0", label: "No significativo p>0.05 (205 UPD)" }
+          ]
+        }
+      },
+      "auto_upd_2020_2026": {
+        "homologated": {
+          label: "Opción 1 · Escala Homologada Comparable (5 rangos fijos USD · P2_PROM)",
+          expr: makeNumericStepExpr("P2_PROM", [50, 100, 175, 300], ["#FEF0D9", "#FDCC8A", "#FC8D59", "#E34A33", "#B30000"], "#E2E8F0"),
+          items: [
+            { color: "#FEF0D9", label: "Bajo (≤ $50 · 27 UPD)" },
+            { color: "#FDCC8A", label: "Medio-Bajo ($50–$100 · 36 UPD)" },
+            { color: "#FC8D59", label: "Medio ($100–$175 · 44 UPD)" },
+            { color: "#E34A33", label: "Medio-Alto ($175–$300 · 26 UPD)" },
+            { color: "#B30000", label: "Alto (> $300 · 12 UPD)" },
+            { color: "#E2E8F0", label: "Sin trámites 2020–2026 (281 UPD)" }
+          ]
+        },
+        "quantiles": {
+          label: "Opción 2 · Quintiles 2020–2026 (P20, P40, P60, P80 · P2_PROM)",
+          expr: makeNumericStepExpr("P2_PROM", [51.48, 89.01, 139.70, 193.30], ["#EFF3FF", "#BDD7E7", "#6BAED6", "#3182BD", "#08519C"], "#E2E8F0"),
+          items: [
+            { color: "#EFF3FF", label: "Q1 (≤ $51.48)" },
+            { color: "#BDD7E7", label: "Q2 ($51.49–$89.01)" },
+            { color: "#6BAED6", label: "Q3 ($89.02–$139.70)" },
+            { color: "#3182BD", label: "Q4 ($139.71–$193.30)" },
+            { color: "#08519C", label: "Q5 (> $193.30 hasta $709.32)" },
+            { color: "#E2E8F0", label: "Sin datos (281 UPD)" }
+          ]
+        },
+        "jenks": {
+          label: "Opción 3 · Rupturas Naturales (Jenks 5 clases · P2_PROM)",
+          expr: makeNumericStepExpr("P2_PROM", [59.10, 124.67, 219.42, 407.03], ["#EDF8E9", "#BAE4B3", "#74C476", "#31A354", "#006D2C"], "#E2E8F0"),
+          items: [
+            { color: "#EDF8E9", label: "$1.15 – $59.10" },
+            { color: "#BAE4B3", label: "$59.11 – $124.67" },
+            { color: "#74C476", label: "$124.68 – $219.42" },
+            { color: "#31A354", label: "$219.43 – $407.03" },
+            { color: "#006D2C", label: "$407.04 – $709.32" },
+            { color: "#E2E8F0", label: "Sin datos (281 UPD)" }
+          ]
+        },
+        "median": {
+          label: "Opción 4 · Mediana Robusta 2020–2026 (P2_MED · resistente a atípicos)",
+          expr: makeNumericStepExpr("P2_MED", [50, 100, 175, 300], ["#FEF0D9", "#FDCC8A", "#FC8D59", "#E34A33", "#B30000"], "#E2E8F0"),
+          items: [
+            { color: "#FEF0D9", label: "Mediana ≤ $50" },
+            { color: "#FDCC8A", label: "Mediana $50–$100" },
+            { color: "#FC8D59", label: "Mediana $100–$175" },
+            { color: "#E34A33", label: "Mediana $175–$300" },
+            { color: "#B30000", label: "Mediana > $300" },
+            { color: "#E2E8F0", label: "Sin datos (281 UPD)" }
+          ]
+        }
+      },
+      "auto_upd_2007_2019": {
+        "homologated": {
+          label: "Opción 1 · Escala Homologada Comparable (5 rangos fijos USD · P1_PROM)",
+          expr: makeNumericStepExpr("P1_PROM", [50, 100, 175, 300], ["#FEF0D9", "#FDCC8A", "#FC8D59", "#E34A33", "#B30000"], "#E2E8F0"),
+          items: [
+            { color: "#FEF0D9", label: "Bajo (≤ $50 · 55 UPD)" },
+            { color: "#FDCC8A", label: "Medio-Bajo ($50–$100 · 37 UPD)" },
+            { color: "#FC8D59", label: "Medio ($100–$175 · 41 UPD)" },
+            { color: "#E34A33", label: "Medio-Alto ($175–$300 · 16 UPD)" },
+            { color: "#B30000", label: "Alto (> $300 · 8 UPD)" },
+            { color: "#E2E8F0", label: "Sin trámites 2007–2019 (269 UPD)" }
+          ]
+        },
+        "quantiles": {
+          label: "Opción 2 · Quintiles 2007–2019 (P20, P40, P60, P80 · P1_PROM)",
+          expr: makeNumericStepExpr("P1_PROM", [32.51, 55.32, 104.38, 144.92], ["#EFF3FF", "#BDD7E7", "#6BAED6", "#3182BD", "#08519C"], "#E2E8F0"),
+          items: [
+            { color: "#EFF3FF", label: "Q1 (≤ $32.51)" },
+            { color: "#BDD7E7", label: "Q2 ($32.52–$55.32)" },
+            { color: "#6BAED6", label: "Q3 ($55.33–$104.38)" },
+            { color: "#3182BD", label: "Q4 ($104.39–$144.92)" },
+            { color: "#08519C", label: "Q5 (> $144.92)" },
+            { color: "#E2E8F0", label: "Sin datos (269 UPD)" }
+          ]
+        },
+        "jenks": {
+          label: "Opción 3 · Rupturas Naturales con Control de Outliers (Jenks · P1_PROM)",
+          expr: makeNumericStepExpr("P1_PROM", [35.72, 90.47, 186.16, 467.41], ["#EDF8E9", "#BAE4B3", "#74C476", "#31A354", "#006D2C"], "#E2E8F0"),
+          items: [
+            { color: "#EDF8E9", label: "$0.03 – $35.72" },
+            { color: "#BAE4B3", label: "$35.73 – $90.47" },
+            { color: "#74C476", label: "$90.48 – $186.16" },
+            { color: "#31A354", label: "$186.17 – $467.41" },
+            { color: "#006D2C", label: "> $467.41 (incluye 4 atípicos)" },
+            { color: "#E2E8F0", label: "Sin datos (269 UPD)" }
+          ]
+        },
+        "median": {
+          label: "Opción 4 · Mediana Robusta 2007–2019 (P1_MED · corrige los 4 outliers >$7.000)",
+          expr: makeNumericStepExpr("P1_MED", [50, 100, 175, 300], ["#FEF0D9", "#FDCC8A", "#FC8D59", "#E34A33", "#B30000"], "#E2E8F0"),
+          items: [
+            { color: "#FEF0D9", label: "Mediana ≤ $50 (71 UPD)" },
+            { color: "#FDCC8A", label: "Mediana $50–$100 (43 UPD)" },
+            { color: "#FC8D59", label: "Mediana $100–$175 (36 UPD)" },
+            { color: "#E34A33", label: "Mediana $175–$300 (4 UPD)" },
+            { color: "#B30000", label: "Mediana > $300 (3 UPD)" },
+            { color: "#E2E8F0", label: "Sin datos (269 UPD)" }
+          ]
+        }
+      },
+      "auto_upd_tendencia": {
+        "diverging": {
+          label: "Opción 1 · Categorías de Tendencia Interperíodo (TENDENCIA)",
+          expr: [
+            "match",
+            ["get", "TENDENCIA"],
+            "Aumento", "#16A34A",
+            "Disminución", "#DC2626",
+            "Solo 2020-2026", "#0284C7",
+            "Solo 2007-2019", "#D97706",
+            "#E2E8F0"
+          ],
+          items: [
+            { color: "#16A34A", label: "Aumento 2020–26 vs 2007–19 (79 UPD)" },
+            { color: "#DC2626", label: "Disminución (37 UPD)" },
+            { color: "#0284C7", label: "Nuevas zonas solo 2020–2026 (30 UPD)" },
+            { color: "#D97706", label: "Registro solo 2007–2019 (41 UPD)" },
+            { color: "#E2E8F0", label: "Sin datos (239 UPD)" }
+          ]
+        },
+        "pct_var": {
+          label: "Opción 2 · Tasa de Variación Porcentual Divergente (PCT_VAR %)",
+          expr: [
+            "case",
+            ["all", ["has", "PCT_VAR"], ["!=", ["get", "PCT_VAR"], null]],
+            [
+              "step",
+              ["to-number", ["get", "PCT_VAR"]],
+              "#B91C1C",
+              -20, "#FCA5A5",
+              0, "#BBF7D0",
+              50, "#22C55E",
+              150, "#15803D"
+            ],
+            "#E2E8F0"
+          ],
+          items: [
+            { color: "#B91C1C", label: "Caída fuerte (≤ -20%)" },
+            { color: "#FCA5A5", label: "Ajuste moderado (-20% a 0%)" },
+            { color: "#BBF7D0", label: "Plusvalía moderada (0% a +50%)" },
+            { color: "#22C55E", label: "Plusvalía alta (+50% a +150%)" },
+            { color: "#15803D", label: "Plusvalía muy alta (> +150%)" },
+            { color: "#E2E8F0", label: "Sin par comparable (310 UPD)" }
+          ]
+        }
+      }
+    };
+
+    function resolveThematicFillExpr(colorSpec, schemeKey) {
+      if (THEMATIC_SCHEMES[colorSpec]) {
+        var group = THEMATIC_SCHEMES[colorSpec];
+        var chosen = (schemeKey && group[schemeKey]) || group[Object.keys(group)[0]];
+        return chosen ? chosen.expr : "#007F8B";
+      }
+      return colorSpec;
+    }
+
+    function renderLegendSwatchesDom(containerEl, colorSpec, schemeKey) {
+      if (!containerEl || !THEMATIC_SCHEMES[colorSpec]) return;
+      var group = THEMATIC_SCHEMES[colorSpec];
+      var chosen = (schemeKey && group[schemeKey]) || group[Object.keys(group)[0]];
+      if (!chosen || !Array.isArray(chosen.items)) return;
+      containerEl.innerHTML = "";
+      chosen.items.forEach(function (it) {
+        var chip = document.createElement("span");
+        chip.style.display = "inline-flex";
+        chip.style.alignItems = "center";
+        chip.style.gap = "0.28rem";
+        chip.style.fontSize = "0.71rem";
+        chip.style.padding = "0.12rem 0.38rem";
+        chip.style.background = "#FFFFFF";
+        chip.style.border = "1px solid #CBD5E1";
+        chip.style.borderRadius = "4px";
+        var sw = document.createElement("span");
+        sw.style.display = "inline-block";
+        sw.style.width = "10px";
+        sw.style.height = "10px";
+        sw.style.borderRadius = "2px";
+        sw.style.background = it.color;
+        sw.style.border = "1px solid rgba(15,23,42,0.25)";
+        var txt = document.createElement("span");
+        txt.textContent = it.label;
+        chip.appendChild(sw);
+        chip.appendChild(txt);
+        containerEl.appendChild(chip);
+      });
+    }
+
+    function setLayerThematicScheme(layerId, newScheme) {
+      var lyr = (cfg.layers || []).find(function (l) { return l.id === layerId; });
+      if (!lyr) return;
+      var styleOpts = lyr.style || {};
+      var fillColor = styleOpts.fill_color;
+      if (!THEMATIC_SCHEMES[fillColor]) return;
+
+      styleOpts.active_scheme = newScheme;
+      if (lyr.style) lyr.style.active_scheme = newScheme;
+
+      var schemeSelect = document.querySelector('[data-layer-scheme="' + layerId + '"]');
+      if (schemeSelect && schemeSelect.value !== newScheme) {
+        schemeSelect.value = newScheme;
+      }
+
+      var pillBox = document.querySelector('[data-pill-layer="' + layerId + '"]');
+      if (pillBox) {
+        var pills = pillBox.querySelectorAll(".gv-scheme-pill");
+        pills.forEach(function (p) {
+          if (p.getAttribute("data-scheme-val") === newScheme) {
+            p.classList.add("is-active");
+          } else {
+            p.classList.remove("is-active");
+          }
+        });
+      }
+
+      var swatchBox = document.querySelector('[data-layer-swatches="' + layerId + '"]');
+      if (swatchBox) {
+        renderLegendSwatchesDom(swatchBox, fillColor, newScheme);
+      }
+
+      if (mapInstance && mapInstance.getLayer(layerId + "-fill")) {
+        mapInstance.setPaintProperty(layerId + "-fill", "fill-color", resolveThematicFillExpr(fillColor, newScheme));
+      }
+
+      updateFloatingMapLegend();
+    }
+
+    function updateFloatingMapLegend() {
+      var legendBody = document.getElementById("gv-legend-body");
+      if (!legendBody) return;
+      var activeHtml = [];
+
+      (cfg.layers || []).forEach(function (lyr) {
+        var chk = document.querySelector('[data-layer-toggle="' + lyr.id + '"]');
+        var isVisible = chk ? chk.checked : (lyr.style && lyr.style.visible_by_default !== false);
+        if (!isVisible) return;
+
+        var styleOpts = lyr.style || {};
+        var fillColor = styleOpts.fill_color;
+        var strokeColor = styleOpts.stroke_color || "#14283F";
+
+        if (THEMATIC_SCHEMES[fillColor]) {
+          var group = THEMATIC_SCHEMES[fillColor];
+          var curScheme = styleOpts.active_scheme || styleOpts.default_scheme || Object.keys(group)[0];
+          var schemeObj = group[curScheme] || group[Object.keys(group)[0]];
+          if (!schemeObj) return;
+
+          var swatchesHtml = (schemeObj.items || []).map(function (it) {
+            return '<div class="gv-legend-chip">' +
+              '<span class="gv-legend-color-box" style="background:' + it.color + ';"></span>' +
+              '<span class="gv-legend-chip-label">' + it.label + '</span>' +
+            '</div>';
+          }).join("");
+
+          var schemeTitleParts = schemeObj.label.split("·");
+          var schemeBadge = schemeTitleParts.length > 1 ? schemeTitleParts[0].trim() : "Opción";
+
+          activeHtml.push(
+            '<div class="gv-legend-layer-card">' +
+              '<div class="gv-legend-layer-head">' +
+                '<span class="gv-legend-layer-name">' + lyr.title + '</span>' +
+                '<span class="gv-legend-scheme-badge">' + schemeBadge + '</span>' +
+              '</div>' +
+              '<div style="font-size:0.69rem;color:#475569;margin-bottom:0.25rem;">' + (schemeTitleParts[1] ? schemeTitleParts.slice(1).join("·").trim() : schemeObj.label) + '</div>' +
+              '<div class="gv-legend-swatches-grid">' + swatchesHtml + '</div>' +
+            '</div>'
+          );
+        } else {
+          activeHtml.push(
+            '<div class="gv-legend-layer-card">' +
+              '<div class="gv-legend-layer-head">' +
+                '<span class="gv-legend-layer-name">' + lyr.title + '</span>' +
+                '<span class="gv-legend-scheme-badge">Límite</span>' +
+              '</div>' +
+              '<div class="gv-legend-swatches-grid">' +
+                '<div class="gv-legend-chip">' +
+                  '<span class="gv-legend-color-box" style="background:transparent;border:2px solid ' + strokeColor + ';"></span>' +
+                  '<span class="gv-legend-chip-label">Límite referencial</span>' +
+                '</div>' +
+              '</div>' +
+            '</div>'
+          );
+        }
+      });
+
+      if (activeHtml.length === 0) {
+        legendBody.innerHTML = '<div style="font-size:0.73rem;color:var(--c-text-muted);font-style:italic;padding:0.25rem 0;">No hay capas temáticas activas. Activa una capa en el panel izquierdo para ver su simbología.</div>';
+      } else {
+        legendBody.innerHTML = activeHtml.join("");
+      }
+    }
+
+    var SCENARIO_DEFS = {
+      "mercado-2025-homol": {
+        activeLayers: ["sv-amss-lisa-precios-2025"],
+        schemes: { "sv-amss-lisa-precios-2025": "homologated" }
+      },
+      "mercado-2025-lisa": {
+        activeLayers: ["sv-amss-lisa-precios-2025"],
+        schemes: { "sv-amss-lisa-precios-2025": "lisa_sig" }
+      },
+      "opamss-p2-homol": {
+        activeLayers: ["sv-amss-upd-2020-2026"],
+        schemes: { "sv-amss-upd-2020-2026": "homologated" }
+      },
+      "opamss-p1-homol": {
+        activeLayers: ["sv-amss-upd-2007-2019"],
+        schemes: { "sv-amss-upd-2007-2019": "homologated" }
+      },
+      "opamss-tendencia": {
+        activeLayers: ["sv-amss-upd-tendencia"],
+        schemes: { "sv-amss-upd-tendencia": "diverging" }
+      }
+    };
+
+    function applyScenario(scenarioKey) {
+      var def = SCENARIO_DEFS[scenarioKey];
+      if (!def) return;
+
+      var scenarioBtns = document.querySelectorAll(".gv-scenario-btn");
+      scenarioBtns.forEach(function (btn) {
+        if (btn.getAttribute("data-gv-scenario") === scenarioKey) {
+          btn.classList.add("is-active", "btn-primary");
+          btn.classList.remove("btn-outline");
+        } else {
+          btn.classList.remove("is-active", "btn-primary");
+          btn.classList.add("btn-outline");
+        }
+      });
+
+      var soilLayerIds = [
+        "sv-amss-lisa-precios-2025",
+        "sv-amss-upd-2020-2026",
+        "sv-amss-upd-2007-2019",
+        "sv-amss-upd-tendencia"
+      ];
+
+      soilLayerIds.forEach(function (lid) {
+        var shouldShow = def.activeLayers.indexOf(lid) !== -1;
+        var chk = document.querySelector('[data-layer-toggle="' + lid + '"]');
+        if (chk) {
+          chk.setAttribute("data-user-modified", "true");
+          chk.checked = shouldShow;
+        }
+        if (mapInstance) {
+          var vis = shouldShow ? "visible" : "none";
+          ["-fill", "-line", "-pt"].forEach(function (suf) {
+            if (mapInstance.getLayer(lid + suf)) {
+              mapInstance.setLayoutProperty(lid + suf, "visibility", vis);
+            }
+          });
+        }
+        if (def.schemes && def.schemes[lid]) {
+          setLayerThematicScheme(lid, def.schemes[lid]);
+        }
+      });
+
+      updateFloatingMapLegend();
+    }
+
+    function renderGeoJsonSourceLayers(srcId, prefixId, dataOrUrl, fillColor, fillOpacity, strokeColor, strokeWidth, badgeLabel, layerTitle, styleOpts) {
+      var opts = styleOpts || {};
+      var chkEl = document.querySelector('[data-layer-toggle="' + prefixId + '"]');
+      var initVis = chkEl ? (chkEl.checked ? "visible" : "none") : (opts.visible_by_default === false ? "none" : "visible");
+      var effectiveFill = resolveThematicFillExpr(fillColor, opts.active_scheme || opts.default_scheme);
       if (mapInstance.getLayer(prefixId + "-fill")) mapInstance.removeLayer(prefixId + "-fill");
       if (mapInstance.getLayer(prefixId + "-line")) mapInstance.removeLayer(prefixId + "-line");
       if (mapInstance.getLayer(prefixId + "-pt")) mapInstance.removeLayer(prefixId + "-pt");
@@ -1222,29 +1702,34 @@
         id: prefixId + "-fill",
         type: "fill",
         source: srcId,
-        filter: ["==", ["geometry-type"], "Polygon"],
-        paint: { "fill-color": fillColor, "fill-opacity": fillOpacity }
+        filter: ["match", ["geometry-type"], ["Polygon", "MultiPolygon"], true, false],
+        layout: { visibility: initVis },
+        paint: { "fill-color": effectiveFill, "fill-opacity": fillOpacity }
       });
       mapInstance.addLayer({
         id: prefixId + "-line",
         type: "line",
         source: srcId,
+        layout: { visibility: initVis },
         paint: { "line-color": strokeColor, "line-width": strokeWidth }
       });
       mapInstance.addLayer({
         id: prefixId + "-pt",
         type: "circle",
         source: srcId,
-        filter: ["==", ["geometry-type"], "Point"],
+        filter: ["match", ["geometry-type"], ["Point", "MultiPoint"], true, false],
+        layout: { visibility: initVis },
         paint: {
           "circle-radius": 6,
-          "circle-color": fillColor,
+          "circle-color": typeof effectiveFill === "string" ? effectiveFill : "#007F8B",
           "circle-stroke-color": strokeColor,
           "circle-stroke-width": 2
         }
       });
 
-      attachFeatureClickPopup(prefixId + "-fill", badgeLabel, layerTitle);
+      if (fillOpacity > 0.01 && opts.interactive_fill !== false) {
+        attachFeatureClickPopup(prefixId + "-fill", badgeLabel, layerTitle);
+      }
       attachFeatureClickPopup(prefixId + "-pt", badgeLabel, layerTitle);
     }
 
@@ -1266,6 +1751,8 @@
           var fillOpacity = (lyr.style && lyr.style.fill_opacity) !== undefined ? lyr.style.fill_opacity : 0.22;
           var strokeColor = (lyr.style && lyr.style.stroke_color) || "#14283F";
           var strokeWidth = (lyr.style && lyr.style.stroke_width) || 2;
+          var isVisibleByDefault = !(lyr.style && lyr.style.visible_by_default === false);
+          var styleOpts = Object.assign({}, lyr.style || {});
 
           fetch(resolvedSource)
             .then(function (r) {
@@ -1282,9 +1769,10 @@
                 strokeColor,
                 strokeWidth,
                 "CAPA DEL PROYECTO · " + (lyr.status || "").toUpperCase(),
-                lyr.title
+                lyr.title,
+                styleOpts
               );
-              if (!initialBoundsFitted) {
+              if (!initialBoundsFitted && isVisibleByDefault) {
                 var b = computeGeoJsonBounds(gj);
                 if (b) {
                   if (!combinedBounds) {
@@ -1306,25 +1794,58 @@
           var chk = document.querySelector('[data-layer-toggle="' + lyr.id + '"]');
           if (chk) {
             chk.disabled = false;
-            chk.checked = true;
+            if (!chk.hasAttribute("data-user-modified")) {
+              chk.checked = isVisibleByDefault;
+            }
             chk.onchange = function () {
+              chk.setAttribute("data-user-modified", "true");
               var vis = chk.checked ? "visible" : "none";
               ["-fill", "-line", "-pt"].forEach(function (suf) {
                 if (mapInstance.getLayer(lyr.id + suf)) {
                   mapInstance.setLayoutProperty(lyr.id + suf, "visibility", vis);
                 }
               });
+              updateFloatingMapLegend();
             };
           }
           var slider = document.querySelector('[data-layer-opacity="' + lyr.id + '"]');
           if (slider) {
             slider.disabled = false;
+            slider.value = String(fillOpacity);
             slider.oninput = function () {
               var op = parseFloat(slider.value);
               if (mapInstance.getLayer(lyr.id + "-fill")) {
                 mapInstance.setPaintProperty(lyr.id + "-fill", "fill-opacity", op);
               }
             };
+          }
+
+          if (THEMATIC_SCHEMES[fillColor]) {
+            var schemeSelect = document.querySelector('[data-layer-scheme="' + lyr.id + '"]');
+            var swatchBox = document.querySelector('[data-layer-swatches="' + lyr.id + '"]');
+            var initScheme = (styleOpts.active_scheme || styleOpts.default_scheme || Object.keys(THEMATIC_SCHEMES[fillColor])[0]);
+            renderLegendSwatchesDom(swatchBox, fillColor, initScheme);
+            if (schemeSelect) {
+              schemeSelect.value = initScheme;
+              schemeSelect.onchange = function () {
+                setLayerThematicScheme(lyr.id, schemeSelect.value);
+              };
+            }
+            var pillBox = document.querySelector('[data-pill-layer="' + lyr.id + '"]');
+            if (pillBox) {
+              var pills = pillBox.querySelectorAll(".gv-scheme-pill");
+              pills.forEach(function (pill) {
+                if (pill.getAttribute("data-scheme-val") === initScheme) {
+                  pill.classList.add("is-active");
+                } else {
+                  pill.classList.remove("is-active");
+                }
+                pill.onclick = function () {
+                  var sVal = pill.getAttribute("data-scheme-val");
+                  if (sVal) setLayerThematicScheme(lyr.id, sVal);
+                };
+              });
+            }
           }
         } else if (lyr.format === "xyz_or_cog" && resolvedSource.indexOf("{z}") !== -1) {
           mapInstance.addSource(srcId, { type: "raster", tiles: [resolvedSource], tileSize: 256 });
@@ -1372,6 +1893,8 @@
         var maskOp = maskOpEl ? parseFloat(maskOpEl.value) : 0.88;
         applyStudyAreaMaskToMap(mapInstance, projectPerimeterGeoJson, maskEnabled, maskOp);
       }
+
+      updateFloatingMapLegend();
     }
 
     var projectPerimeterGeoJson = null;
@@ -1456,6 +1979,24 @@
           applyBasemapKey(btn.getAttribute("data-basemap-quick"));
         });
       });
+
+      var scenarioBtns = document.querySelectorAll(".gv-scenario-btn");
+      scenarioBtns.forEach(function (btn) {
+        btn.onclick = function () {
+          var scKey = btn.getAttribute("data-gv-scenario");
+          if (scKey) applyScenario(scKey);
+        };
+      });
+
+      var legendToggleBtn = document.getElementById("gv-legend-toggle");
+      var floatingLegendEl = document.getElementById("gv-floating-legend");
+      if (legendToggleBtn && floatingLegendEl) {
+        legendToggleBtn.onclick = function () {
+          var isCol = floatingLegendEl.classList.toggle("is-collapsed");
+          legendToggleBtn.textContent = isCol ? "+" : "−";
+          legendToggleBtn.title = isCol ? "Expandir leyenda" : "Minimizar leyenda";
+        };
+      }
     }
 
     // =======================================================================

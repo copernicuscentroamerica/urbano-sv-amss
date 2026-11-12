@@ -1,0 +1,202 @@
+[
+  {
+    "key": "proj-p1",
+    "number": "LÁMINA P1",
+    "shortTitle": "P1 · Píxel 20 m Urbano",
+    "title": "Superficie Continua a Nivel de Píxel (20 m) — Valor del Suelo Urbano y Desarrollable",
+    "sensor": "OPAMSS (2007–2026) + Oferta 2025 + Google Embeddings V1 + Copernicus DEM/WorldCover",
+    "formula": "VAL_URB_20m = exp( RF_200_trees( A00..A63, WorldCover, OpenBuildings, VIIRS, DEM_GLO30 ) ) * Duan",
+    "reading": "Captura con precisión de 20 m el gradiente policéntrico de valor del suelo en San Benito, Escalón, Antiguo Cuscatlán y Santa Tecla (> $300/m²), excluyendo quebradas escarpadas (>35°) y bosques protegidos.",
+    "imageRel": "geovisor/data/amss_pixel_20m_urbano.png",
+    "coords": [
+      [
+        -89.628689,
+        13.920473
+      ],
+      [
+        -89.025201,
+        13.920473
+      ],
+      [
+        -89.025201,
+        13.418135
+      ],
+      [
+        -89.628689,
+        13.418135
+      ]
+    ],
+    "swatches": [
+      {
+        "color": "#67001F",
+        "label": "> $420 / m²",
+        "desc": "Nodos corporativos prime (máx. $471.1/m²)"
+      },
+      {
+        "color": "#B30000",
+        "label": "$300 – $420 / m²",
+        "desc": "Corredores financieros y comerciales primarios"
+      },
+      {
+        "color": "#E34A33",
+        "label": "$175 – $300 / m²",
+        "desc": "Tejido residencial medio-alto consolidado"
+      },
+      {
+        "color": "#FC8D59",
+        "label": "$100 – $175 / m²",
+        "desc": "Zonas urbanas consolidadas e industriales"
+      },
+      {
+        "color": "#FDBB84",
+        "label": "$50 – $100 / m²",
+        "desc": "Bordes periurbanos en consolidación"
+      },
+      {
+        "color": "#FEF0D9",
+        "label": "≤ $50 / m²",
+        "desc": "Transición rururbana de baja densidad"
+      }
+    ]
+  },
+  {
+    "key": "proj-p2",
+    "number": "LÁMINA P2",
+    "shortTitle": "P2 · Malla 250 m Valor",
+    "title": "Malla Continua Metropolitana de 250 m (24,292 Polígonos) — Valor Estimado USD/m²",
+    "sensor": "Reducción zonal en GEE (coveringGrid EPSG:32616) sobre los rásters de 20 m",
+    "formula": "Celda_250m: { VAL_EST_M2 (media), VAL_MED_M2 (mediana), VAL_STD_M2, PCT_EDIF, ALT_EDIF_M }",
+    "reading": "Resuelve la cobertura metropolitana continua (incluyendo las ~3,590 ha fuera de UPDs) y entrega una unidad estándar de 6.25 ha ideal para instrumentos de captura de plusvalía y avalúo masivo.",
+    "imageRel": "assets/img/atlas_proyecto/lamina_p2.png",
+    "coords": [
+      [
+        -89.646676,
+        13.935404
+      ],
+      [
+        -89.007197,
+        13.935404
+      ],
+      [
+        -89.007197,
+        13.403145
+      ],
+      [
+        -89.646676,
+        13.403145
+      ]
+    ],
+    "swatches": [
+      {
+        "color": "#99000D",
+        "label": "> $300 / m²",
+        "desc": "Centralidades metropolitanas de máxima plusvalía"
+      },
+      {
+        "color": "#EF3B2C",
+        "label": "$175 – $300 / m²",
+        "desc": "Corredores consolidados de alta demanda"
+      },
+      {
+        "color": "#FC9272",
+        "label": "$100 – $175 / m²",
+        "desc": "Tejido urbano intermedio y subcentros"
+      },
+      {
+        "color": "#FDBE85",
+        "label": "$50 – $100 / m²",
+        "desc": "Expansión periurbana sobre ejes viales"
+      },
+      {
+        "color": "#0F766E",
+        "label": "≤ $50 / m²",
+        "desc": "Suelo rural, agroforestal y volcánico"
+      }
+    ]
+  },
+  {
+    "key": "proj-p3",
+    "number": "LÁMINA P3",
+    "shortTitle": "P3 · Regímenes Urbanos",
+    "title": "Clasificación de Regímenes Morfológicos en la Malla de 250 m",
+    "sensor": "Open Buildings 2.5D + ESA WorldCover 10 m + Copernicus DEM GLO-30",
+    "formula": "Regimen = f( PCT_EDIF, ALT_EDIF_M, Cobertura_Arborea, Pendiente_GLO30 )",
+    "reading": "Distingue 2,215 celdas de tejido urbano consolidado (13,825 ha, media $187.3/m²), 1,571 celdas periurbanas en transición activa (9,578 ha, media $74.4/m²) y 20,506 celdas de matriz rural y reserva ambiental (125,472 ha).",
+    "imageRel": "assets/img/atlas_proyecto/lamina_p3.png",
+    "coords": [
+      [
+        -89.646676,
+        13.935404
+      ],
+      [
+        -89.007197,
+        13.935404
+      ],
+      [
+        -89.007197,
+        13.403145
+      ],
+      [
+        -89.646676,
+        13.403145
+      ]
+    ],
+    "swatches": [
+      {
+        "color": "#DC2626",
+        "label": "Urbano Consolidado",
+        "desc": "2,215 celdas (13,825 ha · mediana $169.2/m²)"
+      },
+      {
+        "color": "#F59E0B",
+        "label": "Periurbano en Transición",
+        "desc": "1,571 celdas (9,578 ha · mediana $67.5/m²)"
+      },
+      {
+        "color": "#0F766E",
+        "label": "Rural / Reserva Ambiental",
+        "desc": "20,506 celdas (125,472 ha · mediana $31.1/m²)"
+      }
+    ]
+  },
+  {
+    "key": "proj-p4",
+    "number": "LÁMINA P4",
+    "shortTitle": "P4 · 425 UPDs Imputadas",
+    "title": "Cobertura Completa e Imputación Satelital de las 425 UPDs de OPAMSS",
+    "sensor": "Base consolidada OPAMSS + LISA_PRECIOS_2025 + Imputación GEE",
+    "formula": "VAL_FINAL_UPD = VAL_FUS25 (si n >= 1)  sino  Mediana_Zonal( VAL_URB_20m )",
+    "reading": "Cierra la brecha histórica de información en las 144 UPDs periféricas y transicionales que carecían de transacciones recientes, alcanzando r = 0.7816 y sesgo de mediana de apenas -0.79%.",
+    "imageRel": "assets/img/atlas_proyecto/lamina_p4.png",
+    "coords": [
+      [
+        -89.646676,
+        13.935404
+      ],
+      [
+        -89.007197,
+        13.935404
+      ],
+      [
+        -89.007197,
+        13.403145
+      ],
+      [
+        -89.646676,
+        13.403145
+      ]
+    ],
+    "swatches": [
+      {
+        "color": "#0F766E",
+        "label": "Muestra Observada / Calibrada",
+        "desc": "281 UPDs (265 oferta 2025 + 16 permisos OPAMSS)"
+      },
+      {
+        "color": "#6366F1",
+        "label": "UPDs Imputadas por Modelo GEE",
+        "desc": "144 UPDs (57,647.5 ha) completadas sin vacíos"
+      }
+    ]
+  }
+]

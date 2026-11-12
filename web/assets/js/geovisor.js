@@ -1189,16 +1189,24 @@
     var initialBoundsFitted = false;
 
     function findReferenceOverlayLayerId(forBoundaryLayer) {
-      var candidates = forBoundaryLayer
-        ? ["study-area-mask-fill", "study-area-mask-outline"]
-        : [
-            "sv-amss-perimetro-distritos-fill",
-            "sv-amss-perimetro-distritos-line",
-            "sv-amss-perimetro-metropolitano-fill",
-            "sv-amss-perimetro-metropolitano-line",
-            "study-area-mask-fill",
-            "study-area-mask-outline"
-          ];
+      var candidates = [];
+      if (!forBoundaryLayer && Array.isArray(cfg.layers)) {
+        cfg.layers.forEach(function (l) {
+          if (l && l.id && l.style && l.style.interactive_fill === false) {
+            candidates.push(l.id + "-fill");
+            candidates.push(l.id + "-line");
+          }
+        });
+      }
+      if (!forBoundaryLayer) {
+        candidates.push(
+          "sv-amss-perimetro-distritos-fill",
+          "sv-amss-perimetro-distritos-line",
+          "sv-amss-perimetro-metropolitano-fill",
+          "sv-amss-perimetro-metropolitano-line"
+        );
+      }
+      candidates.push("study-area-mask-fill", "study-area-mask-outline");
       for (var i = 0; i < candidates.length; i++) {
         if (mapInstance && mapInstance.getLayer(candidates[i])) {
           return candidates[i];
@@ -1275,11 +1283,18 @@
           rows.push(["Distrito / Tipología", (props.nomb_distr || "") + " (" + (props.TYPE || "") + " · " + (props.HA || 0) + " ha)"]);
           rows.push(["Población / Vivienda UVIP", "Hab: " + (props.HAB_TOTAL || 0) + " · UVIP: " + (props.UVIP || 0)]);
         } else {
+          var titleCand = props.nombre || props.NAME_UPD || props.name || props.NAM || props.corregimiento || props.distrito || props.id_celda || props.codigo_ae || props.clase_lbl || props.categoria;
+          if (titleCand) nameVal = String(titleCand);
           Object.keys(props).forEach(function (k) {
-            if (k === "nombre" || k === "name") return;
-            if (props[k] !== null && props[k] !== undefined && String(props[k]).trim() !== "") {
-              rows.push([k, String(props[k])]);
+            if (k === "nombre" || k === "name" || k.charAt(0) === "_") return;
+            var rawV = props[k];
+            if (rawV === null || rawV === undefined || String(rawV).trim() === "") return;
+            var dispV = String(rawV);
+            if (typeof rawV === "number" && !isNaN(rawV)) {
+              dispV = Math.abs(rawV - Math.round(rawV)) < 1e-6 ? String(Math.round(rawV)) : Number(rawV).toFixed(2);
             }
+            var prettyKey = k.replace(/_/g, " ");
+            rows.push([prettyKey.charAt(0).toUpperCase() + prettyKey.slice(1), dispV]);
           });
         }
         if (!rows.length) rows.push(["Estado", "Capa vectorial cargada"]);
@@ -1692,22 +1707,182 @@
       }
     };
 
-    function resolveThematicFillExpr(colorSpec, schemeKey) {
-      if (THEMATIC_SCHEMES[colorSpec]) {
+    var AUTO_RIESGO_EXPR = [
+      "match",
+      ["to-string", ["coalesce", ["get", "nivel_riesgo"], ""]],
+      "Muy Alto", "#DC2626",
+      "Alto", "#F97316",
+      "Medio", "#FACC15",
+      "Bajo", "#16A34A",
+      "#94A3B8"
+    ];
+
+    var AUTO_RIESGO_ITEMS = [
+      { color: "#DC2626", label: "Muy Alto" },
+      { color: "#F97316", label: "Alto" },
+      { color: "#FACC15", label: "Medio" },
+      { color: "#16A34A", label: "Bajo" }
+    ];
+
+    function buildCategoriesMatchExpr(attrName, categories, fallbackHex) {
+      var arr = ["match", ["to-string", ["coalesce", ["get", attrName], ""]]];
+      var seen = {};
+      (categories || []).forEach(function (cat) {
+        if (!cat) return;
+        var k = String(cat.value);
+        if (!seen[k]) {
+          seen[k] = true;
+          arr.push(k, cat.color || "#007F8B");
+        }
+      });
+      arr.push(fallbackHex || "#94A3B8");
+      return arr.length >= 5 ? arr : (fallbackHex || "#007F8B");
+    }
+
+    function parseExpressionLegendItems(expr) {
+      if (!Array.isArray(expr) || !expr.length) return [];
+      var op = expr[0];
+      var out = [];
+      if (op === "case" && Array.isArray(expr[2])) {
+        return parseExpressionLegendItems(expr[2]);
+      }
+      if (op === "match" && expr.length >= 5) {
+        for (var i = 2; i < expr.length - 1; i += 2) {
+          var valLbl = Array.isArray(expr[i]) ? expr[i].join(", ") : String(expr[i]);
+          var col = expr[i + 1];
+          if (typeof col === "string" && col.charAt(0) === "#") {
+            out.push({ color: col, label: valLbl });
+          }
+        }
+      } else if (op === "step" && expr.length >= 5) {
+        if (typeof expr[2] === "string" && expr[2].charAt(0) === "#") {
+          out.push({ color: expr[2], label: "< " + expr[3] });
+        }
+        for (var j = 3; j < expr.length - 1; j += 2) {
+          var brk = expr[j];
+          var nextBrk = j + 2 < expr.length ? expr[j + 2] : null;
+          var cHex = expr[j + 1];
+          if (typeof cHex === "string" && cHex.charAt(0) === "#") {
+            out.push({ color: cHex, label: nextBrk !== null ? (brk + " – " + nextBrk) : ("≥ " + brk) });
+          }
+        }
+      } else if (op === "interpolate" && expr.length >= 7) {
+        for (var m = 3; m < expr.length - 1; m += 2) {
+          var stopVal = expr[m];
+          var stopCol = expr[m + 1];
+          if (typeof stopCol === "string" && stopCol.charAt(0) === "#") {
+            out.push({ color: stopCol, label: String(stopVal) });
+          }
+        }
+      }
+      return out;
+    }
+
+    function resolveThematicFillExpr(colorSpec, schemeKey, styleOpts) {
+      var opts = styleOpts || {};
+      if (typeof colorSpec === "string" && THEMATIC_SCHEMES[colorSpec]) {
         var group = THEMATIC_SCHEMES[colorSpec];
         var chosen = (schemeKey && group[schemeKey]) || group[Object.keys(group)[0]];
         return chosen ? chosen.expr : "#007F8B";
       }
-      return colorSpec;
+      if (colorSpec === "auto_riesgo") {
+        return AUTO_RIESGO_EXPR;
+      }
+      if (Array.isArray(opts.fill_color_expression)) {
+        return opts.fill_color_expression;
+      }
+      if (Array.isArray(colorSpec)) {
+        return colorSpec;
+      }
+      var catAttr = opts.fill_color_attribute || opts.fill_color_property;
+      if (catAttr && Array.isArray(opts.fill_color_categories) && opts.fill_color_categories.length) {
+        var fb = opts.fill_color_fallback || (typeof colorSpec === "string" && colorSpec.charAt(0) === "#" ? colorSpec : "#94A3B8");
+        return buildCategoriesMatchExpr(catAttr, opts.fill_color_categories, fb);
+      }
+      return colorSpec || "#007F8B";
     }
 
-    function renderLegendSwatchesDom(containerEl, colorSpec, schemeKey) {
-      if (!containerEl || !THEMATIC_SCHEMES[colorSpec]) return;
-      var group = THEMATIC_SCHEMES[colorSpec];
-      var chosen = (schemeKey && group[schemeKey]) || group[Object.keys(group)[0]];
-      if (!chosen || !Array.isArray(chosen.items)) return;
+    function resolveThematicStrokeExpr(strokeSpec, styleOpts) {
+      var opts = styleOpts || {};
+      if (Array.isArray(opts.stroke_color_expression)) {
+        return opts.stroke_color_expression;
+      }
+      if (strokeSpec === "auto_riesgo") {
+        return AUTO_RIESGO_EXPR;
+      }
+      if (Array.isArray(strokeSpec)) {
+        return strokeSpec;
+      }
+      return strokeSpec || "#14283F";
+    }
+
+    function extractLayerLegendMeta(lyr) {
+      var styleOpts = (lyr && lyr.style) || {};
+      var fillColor = styleOpts.fill_color;
+      var strokeColor = styleOpts.stroke_color || "#14283F";
+      if (typeof fillColor === "string" && THEMATIC_SCHEMES[fillColor]) {
+        var group = THEMATIC_SCHEMES[fillColor];
+        var curScheme = styleOpts.active_scheme || styleOpts.default_scheme || Object.keys(group)[0];
+        var schemeObj = group[curScheme] || group[Object.keys(group)[0]];
+        if (schemeObj) {
+          var parts = schemeObj.label.split("·");
+          return {
+            badge: parts.length > 1 ? parts[0].trim() : "Opción",
+            subtitle: parts[1] ? parts.slice(1).join("·").trim() : schemeObj.label,
+            items: schemeObj.items || []
+          };
+        }
+      }
+      if (Array.isArray(styleOpts.fill_color_categories) && styleOpts.fill_color_categories.length) {
+        return {
+          badge: lyr.format === "xyz_or_cog" ? "Clases ráster" : "Categorías",
+          subtitle: styleOpts.legend_subtitle || "",
+          items: styleOpts.fill_color_categories.map(function (c) {
+            return { color: c.color || "#007F8B", label: String(c.label !== undefined ? c.label : c.value) };
+          })
+        };
+      }
+      if (Array.isArray(styleOpts.legend) && styleOpts.legend.length) {
+        return {
+          badge: "Escala temática",
+          subtitle: "",
+          items: styleOpts.legend.map(function (c) {
+            return { color: c.color || "#007F8B", label: String(c.label || c.value || "") };
+          })
+        };
+      }
+      if (fillColor === "auto_riesgo" || strokeColor === "auto_riesgo") {
+        return { badge: "Nivel de riesgo", subtitle: "Clasificación de amenaza/exposición", items: AUTO_RIESGO_ITEMS };
+      }
+      var exprItems = parseExpressionLegendItems(styleOpts.fill_color_expression || fillColor || styleOpts.stroke_color_expression);
+      if (exprItems.length) {
+        return { badge: "Escala continua", subtitle: "", items: exprItems };
+      }
+      if (lyr.format === "xyz_or_cog" || lyr.format === "image_overlay") {
+        return {
+          badge: "Ráster georreferenciado",
+          subtitle: "",
+          items: [{ color: typeof fillColor === "string" && fillColor.charAt(0) === "#" ? fillColor : "#0EA5E9", label: lyr.title }]
+        };
+      }
+      if (styleOpts.fill_opacity === 0 || styleOpts.interactive_fill === false) {
+        return {
+          badge: "Límite",
+          subtitle: "",
+          items: [{ color: typeof strokeColor === "string" ? strokeColor : "#14283F", label: "Límite territorial / referencia", isOutline: true }]
+        };
+      }
+      return {
+        badge: "Vectorial",
+        subtitle: "",
+        items: [{ color: typeof fillColor === "string" ? fillColor : "#007F8B", label: lyr.title }]
+      };
+    }
+
+    function populateSwatchesBoxDom(containerEl, items) {
+      if (!containerEl || !Array.isArray(items) || !items.length) return;
       containerEl.innerHTML = "";
-      chosen.items.forEach(function (it) {
+      items.forEach(function (it) {
         var chip = document.createElement("span");
         chip.style.display = "inline-flex";
         chip.style.alignItems = "center";
@@ -1722,14 +1897,35 @@
         sw.style.width = "10px";
         sw.style.height = "10px";
         sw.style.borderRadius = "2px";
-        sw.style.background = it.color;
-        sw.style.border = "1px solid rgba(15,23,42,0.25)";
+        if (it.isOutline) {
+          sw.style.background = "transparent";
+          sw.style.border = "2px solid " + (it.color || "#14283F");
+        } else {
+          sw.style.background = it.color || "#007F8B";
+          sw.style.border = "1px solid rgba(15,23,42,0.25)";
+        }
         var txt = document.createElement("span");
         txt.textContent = it.label;
         chip.appendChild(sw);
         chip.appendChild(txt);
         containerEl.appendChild(chip);
       });
+    }
+
+    function renderLegendSwatchesDom(containerEl, colorSpec, schemeKey, lyrObj) {
+      if (!containerEl) return;
+      if (typeof colorSpec === "string" && THEMATIC_SCHEMES[colorSpec]) {
+        var group = THEMATIC_SCHEMES[colorSpec];
+        var chosen = (schemeKey && group[schemeKey]) || group[Object.keys(group)[0]];
+        if (chosen && Array.isArray(chosen.items)) {
+          populateSwatchesBoxDom(containerEl, chosen.items);
+        }
+        return;
+      }
+      if (lyrObj) {
+        var meta = extractLayerLegendMeta(lyrObj);
+        populateSwatchesBoxDom(containerEl, meta.items);
+      }
     }
 
     function setLayerThematicScheme(layerId, newScheme) {
@@ -1795,56 +1991,32 @@
       var activeHtml = [];
 
       (cfg.layers || []).forEach(function (lyr) {
+        if (!lyr.source_path) return;
         var chk = document.querySelector('[data-layer-toggle="' + lyr.id + '"]');
         var isVisible = chk ? chk.checked : (lyr.style && lyr.style.visible_by_default !== false);
         if (!isVisible) return;
 
-        var styleOpts = lyr.style || {};
-        var fillColor = styleOpts.fill_color;
-        var strokeColor = styleOpts.stroke_color || "#14283F";
+        var meta = extractLayerLegendMeta(lyr);
+        var swatchesHtml = (meta.items || []).map(function (it) {
+          var boxStyle = it.isOutline
+            ? ('background:transparent;border:2px solid ' + (it.color || '#14283F') + ';')
+            : ('background:' + (it.color || '#007F8B') + ';');
+          return '<div class="gv-legend-chip">' +
+            '<span class="gv-legend-color-box" style="' + boxStyle + '"></span>' +
+            '<span class="gv-legend-chip-label">' + it.label + '</span>' +
+          '</div>';
+        }).join("");
 
-        if (THEMATIC_SCHEMES[fillColor]) {
-          var group = THEMATIC_SCHEMES[fillColor];
-          var curScheme = styleOpts.active_scheme || styleOpts.default_scheme || Object.keys(group)[0];
-          var schemeObj = group[curScheme] || group[Object.keys(group)[0]];
-          if (!schemeObj) return;
-
-          var swatchesHtml = (schemeObj.items || []).map(function (it) {
-            return '<div class="gv-legend-chip">' +
-              '<span class="gv-legend-color-box" style="background:' + it.color + ';"></span>' +
-              '<span class="gv-legend-chip-label">' + it.label + '</span>' +
-            '</div>';
-          }).join("");
-
-          var schemeTitleParts = schemeObj.label.split("·");
-          var schemeBadge = schemeTitleParts.length > 1 ? schemeTitleParts[0].trim() : "Opción";
-
-          activeHtml.push(
-            '<div class="gv-legend-layer-card">' +
-              '<div class="gv-legend-layer-head">' +
-                '<span class="gv-legend-layer-name">' + lyr.title + '</span>' +
-                '<span class="gv-legend-scheme-badge">' + schemeBadge + '</span>' +
-              '</div>' +
-              '<div style="font-size:0.69rem;color:#475569;margin-bottom:0.25rem;">' + (schemeTitleParts[1] ? schemeTitleParts.slice(1).join("·").trim() : schemeObj.label) + '</div>' +
-              '<div class="gv-legend-swatches-grid">' + swatchesHtml + '</div>' +
-            '</div>'
-          );
-        } else {
-          activeHtml.push(
-            '<div class="gv-legend-layer-card">' +
-              '<div class="gv-legend-layer-head">' +
-                '<span class="gv-legend-layer-name">' + lyr.title + '</span>' +
-                '<span class="gv-legend-scheme-badge">Límite</span>' +
-              '</div>' +
-              '<div class="gv-legend-swatches-grid">' +
-                '<div class="gv-legend-chip">' +
-                  '<span class="gv-legend-color-box" style="background:transparent;border:2px solid ' + strokeColor + ';"></span>' +
-                  '<span class="gv-legend-chip-label">Límite referencial</span>' +
-                '</div>' +
-              '</div>' +
-            '</div>'
-          );
-        }
+        activeHtml.push(
+          '<div class="gv-legend-layer-card">' +
+            '<div class="gv-legend-layer-head">' +
+              '<span class="gv-legend-layer-name">' + lyr.title + '</span>' +
+              '<span class="gv-legend-scheme-badge">' + (meta.badge || "Capa") + '</span>' +
+            '</div>' +
+            (meta.subtitle ? '<div style="font-size:0.69rem;color:#475569;margin-bottom:0.25rem;">' + meta.subtitle + '</div>' : '') +
+            '<div class="gv-legend-swatches-grid">' + swatchesHtml + '</div>' +
+          '</div>'
+        );
       });
 
       if (activeHtml.length === 0) {
@@ -1945,7 +2117,8 @@
       var opts = styleOpts || {};
       var chkEl = document.querySelector('[data-layer-toggle="' + prefixId + '"]');
       var initVis = chkEl ? (chkEl.checked ? "visible" : "none") : (opts.visible_by_default === false ? "none" : "visible");
-      var effectiveFill = resolveThematicFillExpr(fillColor, opts.active_scheme || opts.default_scheme);
+      var effectiveFill = resolveThematicFillExpr(fillColor, opts.active_scheme || opts.default_scheme, opts);
+      var effectiveStroke = resolveThematicStrokeExpr(strokeColor, opts);
       if (mapInstance.getLayer(prefixId + "-fill")) mapInstance.removeLayer(prefixId + "-fill");
       if (mapInstance.getLayer(prefixId + "-line")) mapInstance.removeLayer(prefixId + "-line");
       if (mapInstance.getLayer(prefixId + "-pt")) mapInstance.removeLayer(prefixId + "-pt");
@@ -1955,11 +2128,14 @@
       var beforeLayerId = findReferenceOverlayLayerId(isBoundary);
       var linePaint = strokeWidth <= 0.35
         ? {
-            "line-color": strokeColor,
+            "line-color": effectiveStroke,
             "line-width": ["interpolate", ["linear"], ["zoom"], 9, 0.04, 11.5, 0.14, 13.5, 0.35, 16, 0.85],
             "line-opacity": ["interpolate", ["linear"], ["zoom"], 9, 0.18, 12, 0.38, 15, 0.65]
           }
-        : { "line-color": strokeColor, "line-width": strokeWidth };
+        : { "line-color": effectiveStroke, "line-width": strokeWidth };
+      if (Array.isArray(opts.line_dasharray) && opts.line_dasharray.length >= 2) {
+        linePaint["line-dasharray"] = opts.line_dasharray;
+      }
 
       mapInstance.addSource(srcId, { type: "geojson", data: dataOrUrl });
       mapInstance.addLayer({
@@ -1984,25 +2160,31 @@
         filter: ["match", ["geometry-type"], ["Point", "MultiPoint"], true, false],
         layout: { visibility: initVis },
         paint: {
-          "circle-radius": 6,
-          "circle-color": typeof effectiveFill === "string" ? effectiveFill : "#007F8B",
-          "circle-stroke-color": strokeColor,
-          "circle-stroke-width": 2
+          "circle-radius": opts.circle_radius || 6,
+          "circle-color": effectiveFill,
+          "circle-stroke-color": typeof effectiveStroke === "string" ? effectiveStroke : "#14283F",
+          "circle-stroke-width": 1.8
         }
       }, beforeLayerId);
 
       if (fillOpacity > 0.01 && opts.interactive_fill !== false) {
         attachFeatureClickPopup(prefixId + "-fill", badgeLabel, layerTitle);
       }
+      if (strokeWidth > 1.2 && fillOpacity <= 0.01 && opts.interactive_fill !== false) {
+        attachFeatureClickPopup(prefixId + "-line", badgeLabel, layerTitle);
+      }
       attachFeatureClickPopup(prefixId + "-pt", badgeLabel, layerTitle);
     }
 
     function wireThematicControlsForLayer(lyr, fillColor, styleOpts) {
-      if (!THEMATIC_SCHEMES[fillColor]) return;
-      var schemeSelect = document.querySelector('[data-layer-scheme="' + lyr.id + '"]');
       var swatchBox = document.querySelector('[data-layer-swatches="' + lyr.id + '"]');
+      if (typeof fillColor !== "string" || !THEMATIC_SCHEMES[fillColor]) {
+        renderLegendSwatchesDom(swatchBox, fillColor, null, lyr);
+        return;
+      }
+      var schemeSelect = document.querySelector('[data-layer-scheme="' + lyr.id + '"]');
       var initScheme = (styleOpts.active_scheme || styleOpts.default_scheme || Object.keys(THEMATIC_SCHEMES[fillColor])[0]);
-      renderLegendSwatchesDom(swatchBox, fillColor, initScheme);
+      renderLegendSwatchesDom(swatchBox, fillColor, initScheme, lyr);
       if (schemeSelect) {
         schemeSelect.value = initScheme;
         schemeSelect.onchange = function () {
@@ -2184,6 +2366,73 @@
           }
 
           wireThematicControlsForLayer(lyr, imgFillColor, imgStyleOpts);
+        } else if (
+          lyr.format === "xyz_or_cog" &&
+          lyr.preview_image_path &&
+          ((Array.isArray(lyr.image_coordinates) && lyr.image_coordinates.length === 4) ||
+            (Array.isArray(lyr.bounds) && lyr.bounds.length === 4))
+        ) {
+          var cogStyle = Object.assign({}, lyr.style || {});
+          var cogOpacity = cogStyle.raster_opacity !== undefined
+            ? cogStyle.raster_opacity
+            : (cogStyle.fill_opacity !== undefined ? cogStyle.fill_opacity : 0.85);
+          var cogVisDefault = !(cogStyle.visible_by_default === false);
+          var resolvedCogPreview = /^https?:\/\//i.test(lyr.preview_image_path)
+            ? lyr.preview_image_path
+            : new URL(lyr.preview_image_path, window.location.origin + baseUrl).href;
+
+          var chkCog = document.querySelector('[data-layer-toggle="' + lyr.id + '"]');
+          if (chkCog) {
+            chkCog.disabled = false;
+            if (!chkCog.hasAttribute("data-user-modified")) {
+              chkCog.checked = cogVisDefault;
+            }
+            chkCog.onchange = function () {
+              chkCog.setAttribute("data-user-modified", "true");
+              var vis = chkCog.checked ? "visible" : "none";
+              if (mapInstance.getLayer(lyr.id + "-raster")) {
+                mapInstance.setLayoutProperty(lyr.id + "-raster", "visibility", vis);
+              }
+              updateFloatingMapLegend();
+            };
+          }
+          var initCogVis = chkCog ? (chkCog.checked ? "visible" : "none") : (cogVisDefault ? "visible" : "none");
+          var cogQuad = Array.isArray(lyr.image_coordinates) && lyr.image_coordinates.length === 4
+            ? lyr.image_coordinates
+            : [
+                [lyr.bounds[0], lyr.bounds[3]],
+                [lyr.bounds[2], lyr.bounds[3]],
+                [lyr.bounds[2], lyr.bounds[1]],
+                [lyr.bounds[0], lyr.bounds[1]]
+              ];
+
+          if (mapInstance.getLayer(lyr.id + "-raster")) mapInstance.removeLayer(lyr.id + "-raster");
+          if (mapInstance.getSource(srcId)) mapInstance.removeSource(srcId);
+          mapInstance.addSource(srcId, {
+            type: "image",
+            url: resolvedCogPreview,
+            coordinates: cogQuad
+          });
+          mapInstance.addLayer({
+            id: lyr.id + "-raster",
+            type: "raster",
+            source: srcId,
+            layout: { visibility: initCogVis },
+            paint: { "raster-opacity": cogOpacity, "raster-resampling": "linear" }
+          }, findReferenceOverlayLayerId(false));
+
+          var sliderCog = document.querySelector('[data-layer-opacity="' + lyr.id + '"]');
+          if (sliderCog) {
+            sliderCog.disabled = false;
+            sliderCog.value = String(cogOpacity);
+            sliderCog.oninput = function () {
+              var op = parseFloat(sliderCog.value);
+              if (mapInstance.getLayer(lyr.id + "-raster")) {
+                mapInstance.setPaintProperty(lyr.id + "-raster", "raster-opacity", op);
+              }
+            };
+          }
+          wireThematicControlsForLayer(lyr, cogStyle.fill_color, cogStyle);
         } else if (lyr.format === "xyz_or_cog" && resolvedSource.indexOf("{z}") !== -1) {
           mapInstance.addSource(srcId, { type: "raster", tiles: [resolvedSource], tileSize: 256 });
           mapInstance.addLayer({ id: lyr.id + "-raster", type: "raster", source: srcId, paint: { "raster-opacity": 0.8 } });
@@ -2237,24 +2486,42 @@
     var projectPerimeterGeoJson = null;
 
     if (mapInstance) {
-      var perimUrl = new URL("geovisor/capas/perimetro_zona_estudio.geojson", window.location.origin + baseUrl).href;
-      fetch(perimUrl)
-        .then(function (r) {
-          return r.ok ? r.json() : null;
-        })
-        .then(function (perimGj) {
-          if (perimGj) {
-            projectPerimeterGeoJson = perimGj;
-            var maskToggleEl = document.getElementById("gv-toggle-mask");
-            var maskOpEl = document.getElementById("gv-mask-opacity");
-            var maskEnabled = maskToggleEl ? maskToggleEl.checked : true;
-            var maskOp = maskOpEl ? parseFloat(maskOpEl.value) : 0.88;
-            if (mapInstance.isStyleLoaded()) {
-              applyStudyAreaMaskToMap(mapInstance, projectPerimeterGeoJson, maskEnabled, maskOp);
+      var perimCandidates = [];
+      if (cfg.perimeter_path) perimCandidates.push(cfg.perimeter_path);
+      perimCandidates.push("geovisor/capas/perimetro_zona_estudio.geojson");
+      (cfg.layers || []).forEach(function (l) {
+        if (!l || !l.source_path || l.format !== "geojson") return;
+        if ((l.style && l.style.interactive_fill === false) || /(perimetro|area_estudio|municipio_one|conchagua_la_union)/i.test(l.source_path)) {
+          if (perimCandidates.indexOf(l.source_path) === -1) perimCandidates.push(l.source_path);
+        }
+      });
+
+      function tryFetchPerimeterAt(idx) {
+        if (idx >= perimCandidates.length) return;
+        var pUrl = /^https?:\/\//i.test(perimCandidates[idx])
+          ? perimCandidates[idx]
+          : new URL(perimCandidates[idx], window.location.origin + baseUrl).href;
+        fetch(pUrl)
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (perimGj) {
+            if (perimGj && perimGj.type) {
+              projectPerimeterGeoJson = perimGj;
+              var maskToggleEl = document.getElementById("gv-toggle-mask");
+              var maskOpEl = document.getElementById("gv-mask-opacity");
+              var maskEnabled = maskToggleEl ? maskToggleEl.checked : true;
+              var maskOp = maskOpEl ? parseFloat(maskOpEl.value) : 0.88;
+              if (mapInstance.isStyleLoaded()) {
+                applyStudyAreaMaskToMap(mapInstance, projectPerimeterGeoJson, maskEnabled, maskOp);
+              }
+            } else {
+              tryFetchPerimeterAt(idx + 1);
             }
-          }
-        })
-        .catch(function () {});
+          })
+          .catch(function () {
+            tryFetchPerimeterAt(idx + 1);
+          });
+      }
+      tryFetchPerimeterAt(0);
 
       var gvMaskToggle = document.getElementById("gv-toggle-mask");
       var gvMaskOpacity = document.getElementById("gv-mask-opacity");
@@ -2807,32 +3074,132 @@
       });
     }
 
-    points.forEach(function (pt) {
+    function buildHubPopupDom(pt) {
       var wrap = createSafePopupElement(
-        pt.country_name + " · " + pt.short_name,
+        (pt.country_name || "") + " · " + (pt.short_name || pt.id || ""),
         [
-          ["Territorio", pt.territory_label],
-          ["Institución", pt.institution],
-          ["Aviso", "Ubicación referencial según el perfil (cada sitio incluye sus capas en su Geovisor GeoLibre)"]
+          ["Zona de estudio", pt.territory_label || "—"],
+          ["Institución", pt.institution || "Clúster Copernicus Urbano"],
+          ["Capas activas", pt.layers_summary || "Capas satelitales Copernicus + datos locales calibrados"]
         ],
-        "INICIATIVA " + pt.country_code
+        "CLÚSTER COPERNICUS URBANO · " + (pt.country_code || "")
       );
-      if (pt.detail_url) {
-        var link = document.createElement("a");
-        link.href = pt.detail_url;
-        link.textContent = "Ver ficha completa →";
-        link.style.display = "inline-block";
-        link.style.marginTop = "6px";
-        link.style.fontWeight = "700";
-        link.style.color = "#007F8B";
-        wrap.appendChild(link);
+      var btnRow = document.createElement("div");
+      btnRow.style.display = "flex";
+      btnRow.style.flexWrap = "wrap";
+      btnRow.style.gap = "6px";
+      btnRow.style.marginTop = "8px";
+
+      function addPopupBtn(href, label, bg, fg, isExternal) {
+        if (!href) return;
+        var a = document.createElement("a");
+        a.href = href;
+        a.textContent = label;
+        a.style.display = "inline-block";
+        a.style.padding = "4px 8px";
+        a.style.borderRadius = "5px";
+        a.style.fontSize = "0.75rem";
+        a.style.fontWeight = "700";
+        a.style.textDecoration = "none";
+        a.style.background = bg;
+        a.style.color = fg;
+        if (isExternal) {
+          a.target = "_blank";
+          a.rel = "noopener noreferrer";
+        }
+        btnRow.appendChild(a);
       }
 
-      new window.maplibregl.Marker({ color: "#14283F" })
+      addPopupBtn(pt.geovisor_url, "🗺️ Geovisor", "#000A62", "#FFFFFF", /^https?:/i.test(pt.geovisor_url || ""));
+      addPopupBtn(pt.atlas_url, "📚 Atlas Web", "#007F8B", "#FFFFFF", /^https?:/i.test(pt.atlas_url || ""));
+      addPopupBtn(pt.atlas_pdf_url, "📥 Atlas PDF", "#FFC800", "#000A62", true);
+      addPopupBtn(pt.detail_url, "📄 Ficha →", "#EEF2FA", "#000A62", false);
+      wrap.appendChild(btnRow);
+      return wrap;
+    }
+
+    var pointsById = {};
+    points.forEach(function (pt) {
+      if (pt.id) pointsById[pt.id] = pt;
+      var wrap = buildHubPopupDom(pt);
+      new window.maplibregl.Marker({ color: "#000A62" })
         .setLngLat(pt.center)
-        .setPopup(new window.maplibregl.Popup({ offset: 22 }).setDOMContent(wrap))
+        .setPopup(new window.maplibregl.Popup({ offset: 22, maxWidth: "340px" }).setDOMContent(wrap))
         .addTo(map);
     });
+
+    var hubBaseUrl = document.body.getAttribute("data-baseurl") || container.getAttribute("data-baseurl") || "";
+    if (!hubBaseUrl) {
+      var gvScripts = document.querySelectorAll('script[src*="assets/js/geovisor.js"]');
+      if (gvScripts.length) {
+        try {
+          var sPath = new URL(gvScripts[gvScripts.length - 1].src, window.location.href).pathname;
+          hubBaseUrl = sPath.replace(/assets\/js\/geovisor\.js.*$/i, "") || "/";
+        } catch (e) {
+          hubBaseUrl = "/";
+        }
+      } else {
+        hubBaseUrl = "/";
+      }
+    }
+    if (hubBaseUrl.charAt(0) !== "/") hubBaseUrl = "/" + hubBaseUrl;
+    if (hubBaseUrl.charAt(hubBaseUrl.length - 1) !== "/") hubBaseUrl = hubBaseUrl + "/";
+
+    var hubPerimetersCache = null;
+    function mountHubPerimeters() {
+      if (!hubPerimetersCache || !map || !map.isStyleLoaded()) return;
+      if (map.getLayer("hub-perimeters-line")) map.removeLayer("hub-perimeters-line");
+      if (map.getLayer("hub-perimeters-fill")) map.removeLayer("hub-perimeters-fill");
+      if (map.getLayer("hub-perimeters-glow")) map.removeLayer("hub-perimeters-glow");
+      if (map.getSource("hub-perimeters-src")) map.removeSource("hub-perimeters-src");
+
+      map.addSource("hub-perimeters-src", { type: "geojson", data: hubPerimetersCache });
+      map.addLayer({
+        id: "hub-perimeters-glow",
+        type: "line",
+        source: "hub-perimeters-src",
+        paint: { "line-color": "#00E5FF", "line-width": 6, "line-opacity": 0.42 }
+      });
+      map.addLayer({
+        id: "hub-perimeters-fill",
+        type: "fill",
+        source: "hub-perimeters-src",
+        paint: { "fill-color": "#FFC800", "fill-opacity": 0.24 }
+      });
+      map.addLayer({
+        id: "hub-perimeters-line",
+        type: "line",
+        source: "hub-perimeters-src",
+        paint: { "line-color": "#000A62", "line-width": 2.2 }
+      });
+    }
+
+    var perimHubUrl = new URL("assets/data/perimetros_proyectos.geojson", window.location.origin + hubBaseUrl).href;
+    fetch(perimHubUrl)
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (gj) {
+        if (!gj) return;
+        hubPerimetersCache = gj;
+        if (map.isStyleLoaded()) mountHubPerimeters();
+        else map.once("load", mountHubPerimeters);
+      })
+      .catch(function () {});
+
+    map.on("styledata", function () {
+      if (hubPerimetersCache && !map.getSource("hub-perimeters-src")) {
+        mountHubPerimeters();
+      }
+    });
+
+    map.on("click", "hub-perimeters-fill", function (e) {
+      if (!e.features || !e.features.length) return;
+      var pr = e.features[0].properties || {};
+      var ptMatch = pointsById[pr.id] || pr;
+      var dom = buildHubPopupDom(ptMatch);
+      new window.maplibregl.Popup({ maxWidth: "340px" }).setLngLat(e.lngLat).setDOMContent(dom).addTo(map);
+    });
+    map.on("mouseenter", "hub-perimeters-fill", function () { map.getCanvas().style.cursor = "pointer"; });
+    map.on("mouseleave", "hub-perimeters-fill", function () { map.getCanvas().style.cursor = ""; });
   }
 
   // =========================================================================
@@ -3567,6 +3934,47 @@
       } catch (e) {}
     }
     var currentZoom = initialZoomAttr ? parseFloat(initialZoomAttr) : 12;
+    var projPlatesScript = document.getElementById("atlas-project-plates-json");
+    if (projPlatesScript) {
+      try {
+        var projPlatesArr = JSON.parse(projPlatesScript.textContent || "[]");
+        if (Array.isArray(projPlatesArr)) {
+          projPlatesArr.forEach(function (pl) {
+            if (!pl || !pl.key) return;
+            var varKey = pl.key + "-v1";
+            ATLAS_PLATES[pl.key] = {
+              id: pl.key,
+              number: pl.number || "Parte I",
+              shortTitle: pl.shortTitle || pl.title,
+              title: pl.title || pl.shortTitle,
+              sensor: pl.sensor || "Integración Copernicus + Datos Locales del Proyecto",
+              formula: pl.formula || "Modelado espacial aplicado sobre la zona de estudio",
+              selectorLabel: "📌 Lámina analítica específica desarrollada en este proyecto (Parte I del Atlas):",
+              defaultVariant: varKey,
+              variants: [
+                {
+                  key: varKey,
+                  pill: pl.number || "Parte I",
+                  label: pl.title || pl.shortTitle,
+                  title: pl.title || pl.shortTitle,
+                  formula: pl.formula || ""
+                }
+              ],
+              reading: pl.reading || "",
+              swatches: pl.swatches || []
+            };
+            ATLAS_LOCAL_VARIANTS[varKey] = {
+              kind: "image_overlay",
+              imagePath: pl.imageRel,
+              coordinates: pl.coords,
+              opacity: 0.94,
+              districtOutlinePath: pl.outlineRel || null
+            };
+          });
+        }
+      } catch (e) {}
+    }
+
     var defaultPlateAttr = mapContainer.getAttribute("data-default-plate");
     var currentPlateKey = (defaultPlateAttr && ATLAS_PLATES[defaultPlateAttr])
       ? defaultPlateAttr
@@ -3606,7 +4014,9 @@
         pid === "copernicus-dem-glo30" ||
         pid === "jrc-gsw-occurrence" ||
         pid === "gee-pixel-suelo-20m" ||
-        pid === "gee-malla-upds-suelo"
+        pid === "gee-malla-upds-suelo" ||
+        pid.indexOf("proj-") === 0 ||
+        (plateObj.variants || []).length <= 1
       ) {
         return [];
       }
@@ -4017,12 +4427,14 @@
         if (localCfg.kind === "image_overlay") {
           var imgUrl = new URL(localCfg.imagePath, window.location.origin + baseUrl).href;
           var b = localCfg.bounds;
-          var quad = [
-            [b[0], b[3]],
-            [b[2], b[3]],
-            [b[2], b[1]],
-            [b[0], b[1]]
-          ];
+          var quad = Array.isArray(localCfg.coordinates) && localCfg.coordinates.length === 4
+            ? localCfg.coordinates
+            : [
+                [b[0], b[3]],
+                [b[2], b[3]],
+                [b[2], b[1]],
+                [b[0], b[1]]
+              ];
           var imgSrc = prefix + "-img-src";
           var imgLyr = prefix + "-img-lyr";
           atlasMap.addSource(imgSrc, { type: "image", url: imgUrl, coordinates: quad });
@@ -5006,7 +5418,8 @@
     }
 
     function loadSingleProjectPerimeter() {
-      var perimUrl = new URL("geovisor/capas/perimetro_zona_estudio.geojson", window.location.origin + baseUrl).href;
+      var customPerimRel = mapContainer.getAttribute("data-perimeter-path") || "geovisor/capas/perimetro_zona_estudio.geojson";
+      var perimUrl = new URL(customPerimRel, window.location.origin + baseUrl).href;
       fetch(perimUrl)
         .then(function (r) {
           return r.ok ? r.json() : null;

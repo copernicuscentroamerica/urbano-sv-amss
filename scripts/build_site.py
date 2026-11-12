@@ -149,8 +149,8 @@ def render_shell(
         ("aplicacion", "Geovisor (GeoLibre)", ctx.site_url("aplicacion/")),
         ("modelo-suelo", "Modelo Valor Suelo (GEE)", ctx.site_url("modelo-suelo/")),
         ("metodologia", "Metodología", ctx.site_url("metodologia/")),
-        ("resultados", "Resultados y Atlas", ctx.site_url("resultados/")),
-        ("colaborar", "Colaborar", ctx.site_url("colaborar/")),
+        ("resultados", "Atlas y Resultados", ctx.site_url("resultados/")),
+        ("colaborar", "Datos y Código", ctx.site_url("colaborar/")),
     ]
     nav_lis = []
     for key, label, href in nav_items:
@@ -581,10 +581,10 @@ def build_home_page(
         {render_hero_team(manifest)}
         <p class="hero-lead">{esc(manifest['summary'])}</p>
         <div class="hero-actions">
-          <a class="btn btn-primary" href="{html.escape(ctx.site_url('aplicacion/'), quote=True)}">Abrir Geovisor (GeoLibre)</a>
-          <a class="btn btn-teal" href="{html.escape(ctx.site_url('modelo-suelo/'), quote=True)}">📊 Modelo Valor del Suelo (GEE): Metodología, Resultados y Script →</a>
-          <a class="btn btn-outline-light" href="{html.escape(ctx.site_url('proyecto/'), quote=True)}">Leer ficha completa</a>
-          <a class="btn btn-outline-light" href="{html.escape(ctx.site_url('colaborar/'), quote=True)}">Colaborar (Fork / PR)</a>
+          <a class="btn btn-primary" href="{html.escape(ctx.site_url('aplicacion/'), quote=True)}">🧭 Abrir Geovisor Interactivo</a>
+          <a class="btn btn-teal" href="{html.escape(ctx.site_url('resultados/'), quote=True)}">🗺️ Abrir Atlas Interactivo y Resultados</a>
+          <a class="btn btn-outline-light" href="{html.escape(ctx.site_url('assets/descargas/atlas_copernicus_sv-amss.pdf'), quote=True)}" download="Atlas_Copernicus_sv-amss.pdf">📥 Descargar Atlas PDF (27 Págs.)</a>
+          <a class="btn btn-outline-light" href="{html.escape(ctx.site_url('modelo-suelo/'), quote=True)}">📊 Modelo Valor del Suelo (GEE) →</a>
           {repo_btn}
           {demo_btn}
         </div>
@@ -594,34 +594,52 @@ def build_home_page(
 
     mv = layers_cfg.get("map_view", {})
     repo_url = (manifest["links"].get("repository") or "").rstrip("/")
-    hub_base = (ctx.hub_url or "https://copernicuscentroamerica.github.io/clusterurbano/").rstrip("/")
-    ejercicio_url = f"{hub_base}/ejercicio/"
-    new_task_url = f"{repo_url}/issues/new?template=01-tarea-pmv.yml" if repo_url else ctx.site_url("colaborar/")
-    support_url = f"{repo_url}/issues/new?template=02-bloqueo-apoyo.yml" if repo_url else ctx.site_url("colaborar/")
-    pulls_url = f"{repo_url}/pulls" if repo_url else ctx.site_url("colaborar/")
     colaborar_logos_href = ctx.site_url("colaborar/") + "#anadir-actualizar-logos"
+    atlas_pdf_home_href = html.escape(ctx.site_url("assets/descargas/atlas_copernicus_sv-amss.pdf"), quote=True)
+    docx_home_href = html.escape(ctx.site_url("assets/descargas/Metodologia_Modelo_Valor_Suelo_AMSS_GEE.docx"), quote=True)
+    js_home_href = html.escape(ctx.site_url("assets/descargas/gee_modelo_valor_suelo_amss.js"), quote=True)
 
     body = f"""
     {render_status_strip(manifest)}
 
-    <section class="section">
-      <div class="card" style="border-left:4px solid var(--c-brand-blue);">
-        <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:0.75rem;">
+    <section class="section" aria-label="Accesos directos al Geovisor, Atlas y Metodología">
+      <div class="direct-access-strip">
+        <article class="direct-access-card">
           <div>
-            <span class="badge badge-ok">Trabajar en este proyecto</span>
-            <h2 style="margin:0.35rem 0 0.25rem;font-size:1.2rem;">Accesos directos para participantes e instituciones</h2>
-            <p style="margin:0;font-size:0.9rem;color:var(--c-text-muted);">Usa estos enlaces para incorporar avances, actualizar logos institucionales, ejecutar el ejercicio práctico (Google Colab o Google Earth Engine con la misma cuenta de Google que uses en Antigravity), registrar tareas o solicitar apoyo técnico.</p>
+            <span class="badge badge-ok">Visor Multicapa Interactivo</span>
+            <h3>🧭 Geovisor del Proyecto (AMSS)</h3>
+            <p>Explora en vivo la malla continua de 24,292 celdas (250 m), el ráster a nivel de píxel (20 m), las 425 UPDs sin vacíos, los registros históricos de OPAMSS y 23 capas base Copernicus.</p>
           </div>
-          <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
-            {f'<a class="btn btn-outline btn-xs" href="{html.escape(repo_url, quote=True)}" target="_blank" rel="noopener noreferrer">Repositorio oficial ↗</a>' if repo_url else ''}
-            <a class="btn btn-teal btn-xs" href="{html.escape(ctx.site_url('colaborar/'), quote=True)}">Guía de incorporación</a>
-            <a class="btn btn-outline btn-xs" href="{html.escape(colaborar_logos_href, quote=True)}">Añadir o actualizar logos</a>
-            <a class="btn btn-primary btn-xs" href="{html.escape(ejercicio_url, quote=True)}">Ejercicio Colab / GEE ↗</a>
-            <a class="btn btn-outline btn-xs" href="{html.escape(new_task_url, quote=True)}" target="_blank" rel="noopener noreferrer">Crear tarea ↗</a>
-            <a class="btn btn-outline btn-xs" href="{html.escape(support_url, quote=True)}" target="_blank" rel="noopener noreferrer">Solicitar apoyo ↗</a>
-            <a class="btn btn-outline btn-xs" href="{html.escape(pulls_url, quote=True)}" target="_blank" rel="noopener noreferrer">Enviar o revisar PR ↗</a>
+          <div style="display:flex;flex-wrap:wrap;gap:0.45rem;">
+            <a class="btn btn-primary btn-xs" href="{html.escape(ctx.site_url('aplicacion/'), quote=True)}">Abrir Geovisor Interactivo →</a>
+            <a class="btn btn-outline btn-xs" href="{html.escape(ctx.site_url('geovisor/proyecto.geolibre.json'), quote=True)}" download="proyecto-sv-amss.geolibre.json">JSON GeoLibre</a>
           </div>
-        </div>
+        </article>
+
+        <article class="direct-access-card is-teal">
+          <div>
+            <span class="badge badge-lime">Parte I Proyecto + Parte II Copernicus</span>
+            <h3>🗺️ Atlas Cartográfico Web y PDF (27 Págs.)</h3>
+            <p>Consulta el Atlas interactivo encabezado por los resultados específicos del Modelo de Valor del Suelo en el AMSS seguidos por las 10 series satelitales Copernicus, o descarga la edición editorial A4.</p>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:0.45rem;">
+            <a class="btn btn-teal btn-xs" href="{html.escape(ctx.site_url('resultados/'), quote=True)}">Abrir Atlas Interactivo →</a>
+            <a class="btn btn-outline btn-xs" href="{atlas_pdf_home_href}" download="Atlas_Copernicus_sv-amss.pdf">📥 Atlas PDF (27 Págs.)</a>
+          </div>
+        </article>
+
+        <article class="direct-access-card is-gold">
+          <div>
+            <span class="badge badge-declarado">Memoria Técnica y Código Abierto</span>
+            <h3>📊 Modelo GEE, Metodología Word y Script</h3>
+            <p>Revisa la formulación econométrica y de aprendizaje automático (71 bandas: Google Embeddings V1 + EO), la jerarquía en 28 distritos, mejoras Fase II y el script optimizado de GEE.</p>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:0.45rem;">
+            <a class="btn btn-primary btn-xs" href="{html.escape(ctx.site_url('modelo-suelo/'), quote=True)}">Subpágina Modelo GEE →</a>
+            <a class="btn btn-outline btn-xs" href="{docx_home_href}" download="Metodologia_Modelo_Valor_Suelo_AMSS_GEE.docx">📥 Word (.docx)</a>
+            <a class="btn btn-outline btn-xs" href="{js_home_href}" download="gee_modelo_valor_suelo_amss.js">📜 Script (.js)</a>
+          </div>
+        </article>
       </div>
     </section>
 
@@ -853,15 +871,7 @@ def build_proyecto_page(
           <tbody>{"".join(src_rows)}</tbody>
         </table>
       </div>
-      <details class="card" style="margin-top:1rem;">
-        <summary style="cursor:pointer;font-weight:700;color:var(--c-brand-blue);">Ver registro técnico de procedencia por campo (JSON Pointer y códigos internos de auditoría)</summary>
-        <div class="table-wrap" style="margin-top:0.85rem;">
-          <table>
-            <thead><tr><th>Campo (JSON Pointer)</th><th>Estado</th><th>Fuentes asociadas</th><th>Nota metodológica</th></tr></thead>
-            <tbody>{"".join(stmt_rows)}</tbody>
-          </table>
-        </div>
-      </details>
+
     </section>
 
     {render_project_institutions_band(ctx, branding, manifest, colaborar_href=colaborar_logos_href)}
@@ -1130,8 +1140,10 @@ def build_aplicacion_page(
         <p class="hero-lead">Explora la malla continua de 250 m (24,292 celdas), la superficie a nivel de píxel (20 m) y las 425 UPDs completas generadas con Google Satellite Embeddings V1 + EO, junto con los registros históricos de OPAMSS y oferta inmobiliaria 2025.</p>
         <div class="hero-actions" style="margin-top:0.65rem;">
           <a class="btn btn-primary" href="{modelo_suelo_href}">📊 Metodología, Primeros Resultados y Script GEE →</a>
-          <a class="btn btn-teal" href="{docx_dl_href}" download="Metodologia_Modelo_Valor_Suelo_AMSS_GEE.docx">📥 Documento Metodológico (.docx)</a>
-          <a class="btn btn-outline-light" href="{gee_js_dl_href}" download="gee_modelo_valor_suelo_amss.js">📜 Descargar Script GEE (.js)</a>
+          <a class="btn btn-teal" href="{html.escape(ctx.site_url('resultados/'), quote=True)}">🗺️ Abrir Atlas Interactivo →</a>
+          <a class="btn btn-outline-light" href="{html.escape(ctx.site_url('assets/descargas/atlas_copernicus_sv-amss.pdf'), quote=True)}" download="Atlas_Copernicus_sv-amss.pdf">📥 Atlas PDF (27 Págs.)</a>
+          <a class="btn btn-outline-light" href="{docx_dl_href}" download="Metodologia_Modelo_Valor_Suelo_AMSS_GEE.docx">📥 Metodología (.docx)</a>
+          <a class="btn btn-outline-light" href="{gee_js_dl_href}" download="gee_modelo_valor_suelo_amss.js">📜 Script GEE (.js)</a>
         </div>
       </div>
     </section>
@@ -1343,8 +1355,9 @@ def build_aplicacion_page(
               <button type="button" id="gv-toggle-sidebar" class="btn btn-outline-light btn-xs" title="Ocultar o mostrar el panel lateral de capas">⇄ Panel lateral</button>
               <button type="button" id="gv-open-folder-tab" class="btn btn-outline-light btn-xs">Cargar desde carpeta</button>
               <button type="button" id="gv-reset-view" class="btn btn-outline-light btn-xs">Encuadre inicial</button>
+              <a class="btn btn-outline-light btn-xs" href="{html.escape(ctx.site_url('resultados/'), quote=True)}" title="Abrir el Atlas Temático Interactivo del AMSS">🗺️ Atlas Web</a>
               <a class="btn btn-outline-light btn-xs" href="{docx_dl_href}" download="Metodologia_Modelo_Valor_Suelo_AMSS_GEE.docx" title="Descargar documento Word actualizado con metodología y análisis de resultados">📥 Metodología Word</a>
-              <a class="btn btn-outline-light btn-xs" href="{html.escape(ctx.site_url('assets/descargas/atlas_copernicus_zona_estudio.pdf'), quote=True)}" download="Atlas_Copernicus_{esc(pid)}.pdf" title="Descargar Atlas Temático Copernicus con identidad gráfica institucional en PDF">📥 Atlas PDF</a>
+              <a class="btn btn-outline-light btn-xs" href="{html.escape(ctx.site_url('assets/descargas/atlas_copernicus_sv-amss.pdf'), quote=True)}" download="Atlas_Copernicus_{esc(pid)}.pdf" title="Descargar Atlas Institucional Completo (27 páginas) en PDF">📥 Atlas PDF (27p)</a>
               <a class="btn btn-outline-light btn-xs" href="{geolibre_json_href}">JSON GeoLibre</a>
               <a id="btn-open-geolibre-studio" class="btn btn-primary btn-xs" href="{html.escape(studio_open_href, quote=True)}" target="_blank" rel="noopener noreferrer">Abrir en GeoLibre Studio ↗</a>
             </div>
@@ -2193,7 +2206,7 @@ def render_copernicus_study_area_atlas_section(
 ) -> str:
     center_attr = html.escape(json.dumps(initial_center), quote=True)
     pdf_href = html.escape(
-        ctx.site_url("assets/descargas/atlas_copernicus_zona_estudio.pdf") if ctx else "../assets/descargas/atlas_copernicus_zona_estudio.pdf",
+        ctx.site_url("assets/descargas/atlas_copernicus_sv-amss.pdf") if ctx else "../assets/descargas/atlas_copernicus_sv-amss.pdf",
         quote=True,
     )
     pdf_dl_name = f"Atlas_Copernicus_{pid}.pdf"
@@ -2473,16 +2486,31 @@ def render_copernicus_study_area_atlas_section(
     modelo_href = html.escape(ctx.site_url("modelo-suelo/") if ctx else "../modelo-suelo/", quote=True)
     geovisor_href = html.escape(ctx.site_url("aplicacion/") if ctx else "../aplicacion/", quote=True)
 
-    tabs_html = []
+    gee_tabs_html = []
+    eo_tabs_html = []
     gee_cards_html = []
     eo_cards_html = []
-    for pk, pnum, pshort, ptitle, preading, pvariants, pswatches in plates_meta:
+
+    proj_plates_path = ROOT / "geovisor" / "data" / "atlas_parte1_plates.json"
+    proj_plates_raw = "[]"
+    if proj_plates_path.exists():
+        proj_plates_raw = proj_plates_path.read_text(encoding="utf-8").replace("</", "<\\/")
+
+    # Reordenar plates_meta para que Parte I (GEE) quede primero: Malla 250m (P1) y Píxel 20m (P2), luego Láminas 1..10 Copernicus
+    gee_meta = [m for m in plates_meta if m[0] in ("gee-malla-upds-suelo", "gee-pixel-suelo-20m")]
+    gee_meta.sort(key=lambda x: 0 if x[0] == "gee-malla-upds-suelo" else 1)
+    eo_meta = [m for m in plates_meta if m[0] not in ("gee-malla-upds-suelo", "gee-pixel-suelo-20m")]
+    ordered_plates_meta = gee_meta + eo_meta
+
+    for pk, pnum, pshort, ptitle, preading, pvariants, pswatches in ordered_plates_meta:
         is_gee = pk in ("gee-pixel-suelo-20m", "gee-malla-upds-suelo")
         active_cls = " is-active" if pk == default_plate_key else ""
-        tab_style = ' style="border-color:#F59E0B;font-weight:800;"' if is_gee else ""
-        tabs_html.append(
-            f'<button type="button" class="atlas-plate-tab{active_cls}"{tab_style} data-atlas-plate="{esc(pk)}">{esc(pshort)}</button>'
-        )
+        proj_cls = " is-project-plate" if is_gee else ""
+        btn_html = f'<button type="button" class="atlas-plate-tab{proj_cls}{active_cls}" data-atlas-plate="{esc(pk)}">{esc(pshort)}</button>'
+        if is_gee:
+            gee_tabs_html.append(btn_html)
+        else:
+            eo_tabs_html.append(btn_html)
         var_pills = "".join(
             f'<button type="button" class="atlas-variant-pill" data-atlas-plate-select="{esc(pk)}" data-atlas-variant-select="{esc(vk)}">{esc(vlbl)}</button>'
             for vk, vlbl in pvariants
@@ -2523,6 +2551,12 @@ def render_copernicus_study_area_atlas_section(
         else:
             eo_cards_html.append(card_markup)
 
+    tabs_html = (
+        ['<div class="atlas-tabs-group-label">📌 Parte I · Trabajo Específico Desarrollado en el Proyecto AMSS (Modelo Continuo de Valor del Suelo GEE + Datos Locales OPAMSS)</div>']
+        + gee_tabs_html
+        + ['<div class="atlas-tabs-group-label">🛰️ Parte II · Capas Base y Series Multitemporales Derivadas de Copernicus (2017–2024)</div>']
+        + eo_tabs_html
+    )
     cards_html = gee_cards_html + eo_cards_html
 
     gee_quickbar_html = ""
@@ -2553,25 +2587,44 @@ def render_copernicus_study_area_atlas_section(
         </div>
         """
 
+    canonical_gv_url = "https://copernicuscentroamerica.github.io/urbano-sv-amss/aplicacion/"
     return f"""
     <section class="section" id="atlas-copernicus-zona" aria-labelledby="titulo-atlas-copernicus">
+      <div class="atlas-intro-institutional" role="region" aria-label="Introducción institucional del Atlas del Clúster Copernicus Urbano">
+        <div style="display:flex;flex-wrap:wrap;gap:0.45rem;margin-bottom:0.45rem;">
+          <span class="badge badge-country">Clúster Copernicus Urbano · Centroamérica</span>
+          <span class="badge badge-lime">Parte I: Trabajo Específico AMSS · Parte II: Series Copernicus</span>
+        </div>
+        <h2>Introducción Institucional: Datos Copernicus + Evidencia Local para Decisiones Urbanas en el AMSS</h2>
+        <p>Este Atlas ha sido desarrollado en el contexto del <strong>Clúster Copernicus Urbano (Clúster de Asentamientos Humanos de la Comunidad Urbana Copernicus Centroamérica)</strong>. Siguiendo la estructura editorial homologada del portafolio regional, la <strong>portada y la Parte I (primeras páginas y pestañas iniciales)</strong> presentan los trabajos analíticos específicos desarrollados en el proyecto del Área Metropolitana de San Salvador (superficie continua a 20 m, malla metropolitana de 24,292 celdas a 250 m e imputación del 100% de las 425 UPDs), seguidos en la <strong>Parte II</strong> por las diez láminas temáticas y series multitemporales derivadas del Programa Copernicus.</p>
+        <p>La combinación de <strong>datos satelitales abiertos derivados de Copernicus</strong> (Sentinel-2 L2A, Sentinel-1 SAR, ESA WorldCover 10 m y Copernicus DEM GLO-30) y embeddings multimodales con <strong>datos locales obtenidos y generados</strong> (expedientes administrativos de permisos de construcción OPAMSS 2007–2026 y levantamiento de mercado inmobiliario 2025) apoya directamente los procesos de toma de decisión urbana en {esc(territory_label)}: avalúo territorial continuo, captura de plusvalías, planificación de inversiones públicas y zonificación metropolitana.</p>
+        <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.65rem;padding-top:0.45rem;border-top:1px solid #CBD5E1;">
+          <span style="font-size:0.88rem;color:#0F172A;"><strong>🧭 Acceso al Geovisor Interactivo:</strong> También puedes explorar, cruzar y consultar todas las capas dinámicas en <a href="{geovisor_href}"><strong>{canonical_gv_url}</strong></a></span>
+          <div style="display:flex;flex-wrap:wrap;gap:0.45rem;">
+            <a class="btn btn-primary btn-xs" href="{geovisor_href}">🧭 Abrir Geovisor Interactivo →</a>
+            <a class="btn btn-teal btn-xs" href="{pdf_href}" download="{esc(pdf_dl_name)}">📥 Descargar Atlas PDF (27 Págs.)</a>
+            <a class="btn btn-outline btn-xs" href="{modelo_href}">📊 Metodología y Script GEE →</a>
+          </div>
+        </div>
+      </div>
+
       <div class="section-header" style="margin-bottom:0.75rem;">
         <div>
-          <span class="badge badge-lime">Cartografía Temática Enmascarada · 12 Láminas Interactivas (Observación Copernicus + Resultados Modelo Valor del Suelo GEE)</span>
-          <h2 id="titulo-atlas-copernicus" style="margin:0.3rem 0 0.2rem;">Atlas Temático Copernicus y Resultados de Valor del Suelo ({esc(territory_label)})</h2>
-          <p style="margin:0;color:var(--c-text-muted);font-size:0.93rem;">Explora de forma interactiva los <strong>resultados obtenidos del Modelo Espacial de Valor del Suelo en Google Earth Engine (Lámina 11: Superficie Píxel 20 m; Lámina 12: Malla Continua de 24,292 celdas, 425 UPDs sin vacíos y Clusters LISA)</strong> junto con las <strong>10 láminas satelitales multitemporales Copernicus (2017–2024)</strong> recortadas con el perímetro oficial del AMSS.</p>
+          <span class="badge badge-lime">Cartografía Temática Enmascarada · Parte I Resultados del Proyecto + Parte II Observación Copernicus</span>
+          <h2 id="titulo-atlas-copernicus" style="margin:0.3rem 0 0.2rem;">Atlas Temático de Valor del Suelo y Observación Copernicus ({esc(territory_label)})</h2>
+          <p style="margin:0;color:var(--c-text-muted);font-size:0.93rem;">Explora en primer lugar los <strong>resultados específicos obtenidos en el proyecto AMSS (Malla Continua de 24,292 celdas a 250 m, 425 UPDs sin vacíos y Superficie Píxel 20 m)</strong> y, a continuación, las <strong>10 láminas satelitales multitemporales Copernicus (2017–2024)</strong> recortadas al perímetro oficial.</p>
         </div>
       </div>
 
       <div class="atlas-pdf-banner" role="region" aria-label="Descarga del Atlas Institucional en PDF">
         <div class="atlas-pdf-banner-inner">
           <div class="atlas-pdf-banner-text">
-            <span class="atlas-pdf-banner-eyebrow">📘 Edición Editorial Actualizada A4 Horizontal · Identidad Institucional 2.0.0-copernicus-2026</span>
-            <h3 class="atlas-pdf-banner-title">Atlas Oficial Copernicus + Anexo de Resultados del Modelo de Valor del Suelo GEE ({esc(territory_label)})</h3>
-            <p class="atlas-pdf-banner-desc">Actualizado a <strong>25 páginas en formato A4 horizontal</strong>: integra las 10 láminas satelitales base y series anuales (2017–2024) más las <strong>3 nuevas láminas institucionales de resultados obtenidos (Superficie Píxel 20 m, Malla Continua 250 m de 24,292 celdas, e Imputación de las 425 UPDs + Correlaciones de Google Satellite Embeddings V1)</strong>.</p>
+            <span class="atlas-pdf-banner-eyebrow">📘 Edición Editorial Homologada A4 Horizontal · Identidad Institucional 2.0.0-copernicus-2026</span>
+            <h3 class="atlas-pdf-banner-title">Atlas Oficial del Proyecto AMSS: Parte I (Modelo Valor del Suelo GEE) + Parte II (Series Copernicus)</h3>
+            <p class="atlas-pdf-banner-desc">Edición integral de <strong>27 páginas en formato A4 horizontal</strong>: abre con la portada institucional, introducción metodológica y las láminas específicas del Modelo Continuo de Valor del Suelo en el AMSS (Parte I), seguidas por el compendio multitemporal Copernicus 2017–2024 (Parte II).</p>
           </div>
           <div class="atlas-pdf-banner-actions">
-            <a class="btn btn-primary" href="{pdf_href}" download="{esc(pdf_dl_name)}">📥 Descargar Atlas Institucional Completo Actualizado (PDF · 25 Págs.)</a>
+            <a class="btn btn-primary" href="{pdf_href}" download="{esc(pdf_dl_name)}">📥 Descargar Atlas Institucional Completo (PDF · 27 Págs.)</a>
             <a class="btn btn-teal" href="{gee_pdf_href}" download="Atlas_Resultados_Modelo_Suelo_GEE_AMSS.pdf">📥 Descargar Solo Láminas Resultados GEE (PDF · 3 Págs.)</a>
             <button type="button" class="btn btn-outline-light btn-xs" data-atlas-export-pdf>🖨️ Exportar lámina activa del mapa a PDF</button>
             <a class="btn btn-outline-light btn-xs" href="{pdf_href}" target="_blank" rel="noopener noreferrer">Abrir PDF en pestaña ↗</a>
@@ -2581,6 +2634,7 @@ def render_copernicus_study_area_atlas_section(
 
       {gee_quickbar_html}
 
+      <script id="atlas-project-plates-json" type="application/json">{proj_plates_raw}</script>
       <div class="atlas-plate-tabs" role="tablist" aria-label="Láminas temáticas del Atlas Copernicus">
         {"".join(tabs_html)}
       </div>
@@ -2605,7 +2659,7 @@ def render_copernicus_study_area_atlas_section(
               </label>
             </div>
             <div class="geovisor-toolbar-actions">
-              <a class="btn btn-primary btn-xs" href="{pdf_href}" download="{esc(pdf_dl_name)}" title="Descargar el Atlas completo actualizado (25 páginas) en PDF">📥 Descargar Atlas PDF</a>
+              <a class="btn btn-primary btn-xs" href="{pdf_href}" download="{esc(pdf_dl_name)}" title="Descargar el Atlas completo actualizado (27 páginas) en PDF">📥 Descargar Atlas PDF</a>
               <button type="button" class="btn btn-outline-light btn-xs" data-atlas-export-pdf title="Exportar la lámina y variante actuales en formato A4 Horizontal institucional">🖨️ Lámina a PDF</button>
               <button type="button" id="atlas-fit-bounds" class="btn btn-outline-light btn-xs">Encuadrar límite</button>
               <button type="button" id="atlas-toggle-fullscreen" class="btn btn-outline-light btn-xs">⛶ Pantalla completa</button>
@@ -2661,7 +2715,7 @@ def render_copernicus_study_area_atlas_section(
           </div>
 
           <div style="display:flex;flex-wrap:wrap;gap:0.45rem;padding-top:0.5rem;border-top:1px solid var(--c-border);">
-            <a class="btn btn-primary btn-xs" href="{pdf_href}" download="{esc(pdf_dl_name)}">📥 Atlas Completo (25 Págs.)</a>
+            <a class="btn btn-primary btn-xs" href="{pdf_href}" download="{esc(pdf_dl_name)}">📥 Atlas Completo (27 Págs.)</a>
             <a class="btn btn-outline btn-xs" href="{gee_pdf_href}" download="Atlas_Resultados_Modelo_Suelo_GEE_AMSS.pdf">📥 Láminas GEE (3 Págs.)</a>
             <button type="button" class="btn btn-teal btn-xs" data-atlas-export-pdf>🖨️ Exportar lámina activa a PDF</button>
           </div>
@@ -3129,8 +3183,8 @@ Por favor:
         <h1>Cómo colaborar en esta iniciativa (Fork, Capas, Logos y PR)</h1>
         <p class="hero-lead">Cada iniciativa evoluciona en su propio repositorio independiente. Las personas participantes trabajan en ramas de su fork personal y proponen mejoras, capas geoespaciales o logos institucionales mediante Pull Request.</p>
         <div class="hero-actions">
-          <a class="btn btn-primary" href="#anadir-actualizar-logos">Añadir o actualizar logos</a>
-          <a class="btn btn-outline-light" href="#ejercicio-practico">Ejercicio práctico Colab / GEE</a>
+          <a class="btn btn-primary" href="{html.escape(ctx.site_url('modelo-suelo/'), quote=True)}">📊 Ver Script Reproducible GEE y Datos</a>
+          <a class="btn btn-outline-light" href="#anadir-actualizar-logos">Añadir o actualizar logos</a>
         </div>
       </div>
     </section>
@@ -3261,23 +3315,7 @@ Por favor:
       </article>
     </section>
 
-    <section class="section" id="ejercicio-practico">
-      <article class="card" style="border-left:4px solid var(--c-brand-blue);">
-        <span class="badge badge-ok">Ejercicio guiado de extremo a extremo</span>
-        <h2>Ejercicio práctico: Mancha Urbana con Sentinel-2 (Google Colab + Google Earth Engine + Antigravity)</h2>
-        <p>¿Es tu primera vez contribuyendo al proyecto? En el portal regional dispones de un ejercicio completo paso a paso para clasificar el área construida (<em>built-up</em>) con imágenes <strong>Copernicus Sentinel-2 L2A</strong> y un modelo <strong>Random Forest</strong> entrenado con etiquetas automáticas de edificios y red vial, usando la <strong>misma cuenta de Google</strong> que utilizas en Antigravity:</p>
-        <ul>
-          <li><strong>Guía A — Google Colab:</strong> ejecuta el cuaderno interactivo <code>mancha_urbana_sentinel2_vmod01.ipynb</code> en la nube sin instalar paquetes locales y descarga <code>probabilidad.tif</code>, <code>construido.tif</code>, <code>resumen.csv</code> y el polígono vectorial <code>.geojson</code>.</li>
-          <li><strong>Guía B — Google Earth Engine (GEE):</strong> replica el flujo equivalente sobre el catálogo <code>COPERNICUS/S2_SR_HARMONIZED</code> y <code>ee.Classifier.smileRandomForest</code> para escalar a series multianuales y exportar directamente a <code>EPSG:4326</code>.</li>
-          <li><strong>Integración con Antigravity:</strong> coloca los productos resultantes en <code>geovisor/capas/</code>, actualiza la narrativa en <code>content/</code> y envía tu Pull Request para revisión del equipo.</li>
-        </ul>
-        <div class="card-footer">
-          <a class="btn btn-primary" href="{html.escape(ejercicio_url, quote=True)}">Ir al ejercicio guiado (Colab + GEE + Antigravity) →</a>
-          <a class="btn btn-teal" href="{html.escape(ctx.site_url('aplicacion/'), quote=True)}">Abrir Geovisor de {esc(pid)}</a>
-          <a class="btn btn-outline" href="{html.escape(repo_url + '/pulls', quote=True)}" target="_blank" rel="noopener noreferrer">Ver Pull Requests del proyecto ↗</a>
-        </div>
-      </article>
-    </section>
+
 
     <section class="section">
       <div class="grid-2">

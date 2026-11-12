@@ -12,15 +12,15 @@
       "metadata": {
         "caveat": "Estimación continua en USD/m² agregada desde el modelo Random Forest a 20 m entrenado con Google Satellite Embeddings V1 (64 bandas) + Open Buildings 2.5D, ESA WorldCover, VIIRS DNB y Copernicus DEM GLO-30.",
         "resolution": "24,292 polígonos de 250 m / 6.25 ha · Cobertura 100% AMSS (EPSG:4326)",
-        "sourceUrl": "/urbano-sv-amss/geovisor/capas/amss_malla_continua_250m.geojson",
+        "sourceUrl": "/geovisor/capas/amss_malla_continua_250m.geojson",
         "status": "publicado"
       },
       "name": "Malla Continua 250 m — Valor del Suelo Estimado (Modelo GEE · 24,292 celdas)",
       "opacity": 1,
       "source": {
-        "data": "/urbano-sv-amss/geovisor/capas/amss_malla_continua_250m.geojson",
+        "data": "/geovisor/capas/amss_malla_continua_250m.geojson",
         "type": "geojson",
-        "url": "/urbano-sv-amss/geovisor/capas/amss_malla_continua_250m.geojson"
+        "url": "/geovisor/capas/amss_malla_continua_250m.geojson"
       },
       "style": {
         "blendMode": "normal",
@@ -173,15 +173,15 @@
       "metadata": {
         "caveat": "Integra el valor observado/calibrado 2025 en 281 UPDs (ORIGEN_FIN = OBSERVADO) e imputa mediante el modelo GEE las 144 UPDs sin muestra previa (ORIGEN_FIN = IMPUTADO_MODELO_GEE).",
         "resolution": "425 UPDs válidas · 281 observadas + 144 imputadas por GEE (EPSG:4326)",
-        "sourceUrl": "/urbano-sv-amss/geovisor/capas/amss_upd_425_imputadas.geojson",
+        "sourceUrl": "/geovisor/capas/amss_upd_425_imputadas.geojson",
         "status": "publicado"
       },
       "name": "UPDs 425 Completas — Valor Integrado e Imputación Satelital GEE (0 vacíos)",
       "opacity": 1,
       "source": {
-        "data": "/urbano-sv-amss/geovisor/capas/amss_upd_425_imputadas.geojson",
+        "data": "/geovisor/capas/amss_upd_425_imputadas.geojson",
         "type": "geojson",
-        "url": "/urbano-sv-amss/geovisor/capas/amss_upd_425_imputadas.geojson"
+        "url": "/geovisor/capas/amss_upd_425_imputadas.geojson"
       },
       "style": {
         "blendMode": "normal",
@@ -334,7 +334,7 @@
       "metadata": {
         "caveat": "Superficie raster continua de valor del suelo a 20 m ($8.66 a $471.13 USD/m²). Permite alternar entre suelo urbano/desarrollable (pendiente < 35° sin agua) y potencial continuo completo.",
         "resolution": "Píxel 20 m · 3.85 millones de píxeles válidos (COG GeoTIFF + Vista Web Mercator)",
-        "sourceUrl": "/urbano-sv-amss/geovisor/data/amss_pixel_20m_urbano.png",
+        "sourceUrl": "/geovisor/data/amss_pixel_20m_urbano.png",
         "status": "publicado"
       },
       "name": "Superficie Continua a Nivel de Píxel 20 m — Modelo GEE (Raster USD/m²)",
@@ -342,7 +342,7 @@
       "source": {
         "data": null,
         "type": "raster",
-        "url": "/urbano-sv-amss/geovisor/data/amss_pixel_20m_urbano.png"
+        "url": "/geovisor/data/amss_pixel_20m_urbano.png"
       },
       "style": {
         "blendMode": "normal",
@@ -483,15 +483,15 @@
       "metadata": {
         "caveat": "Obtenido mediante web scraping de portales inmobiliarios (2025). Campo principal: promedio_2025 (truncado en Shapefile como promedio_2) e indicadores LISA (cuadrante_, moran_loca, p_perm_loc).",
         "resolution": "265 UPD con oferta inmobiliaria 2025 (EPSG:4326)",
-        "sourceUrl": "/urbano-sv-amss/geovisor/capas/LISA_PRECIOS_2025.geojson",
+        "sourceUrl": "/geovisor/capas/LISA_PRECIOS_2025.geojson",
         "status": "publicado"
       },
       "name": "Precios de oferta inmobiliaria 2025 y análisis LISA (Web Scraping · promedio_2025)",
       "opacity": 1,
       "source": {
-        "data": "/urbano-sv-amss/geovisor/capas/LISA_PRECIOS_2025.geojson",
+        "data": "/geovisor/capas/LISA_PRECIOS_2025.geojson",
         "type": "geojson",
-        "url": "/urbano-sv-amss/geovisor/capas/LISA_PRECIOS_2025.geojson"
+        "url": "/geovisor/capas/LISA_PRECIOS_2025.geojson"
       },
       "style": {
         "blendMode": "normal",
@@ -644,15 +644,15 @@
       "metadata": {
         "caveat": "Valor de suelo a partir de registros de permisos de OPAMSS (período 2020–2026, campo P2_PROM y mediana P2_MED; 145 UPD con muestra activa y 281 sin trámites en el período).",
         "resolution": "426 UPD consolidadas · 145 con permisos 2020–2026 (EPSG:4326)",
-        "sourceUrl": "/urbano-sv-amss/geovisor/capas/upd_consolidado.geojson",
+        "sourceUrl": "/geovisor/capas/upd_consolidado.geojson",
         "status": "publicado"
       },
       "name": "Valor promedio del suelo 2020–2026 por UPD (Permisos OPAMSS · P2_PROM)",
       "opacity": 1,
       "source": {
-        "data": "/urbano-sv-amss/geovisor/capas/upd_consolidado.geojson",
+        "data": "/geovisor/capas/upd_consolidado.geojson",
         "type": "geojson",
-        "url": "/urbano-sv-amss/geovisor/capas/upd_consolidado.geojson"
+        "url": "/geovisor/capas/upd_consolidado.geojson"
       },
       "style": {
         "blendMode": "normal",
@@ -805,15 +805,15 @@
       "metadata": {
         "caveat": "Valor de suelo a partir de registros de permisos de OPAMSS (período 2007–2019, campo P1_PROM y mediana P1_MED; incluye opción de control de 4 valores extremos > $7.000).",
         "resolution": "426 UPD consolidadas · 157 con permisos 2007–2019 (EPSG:4326)",
-        "sourceUrl": "/urbano-sv-amss/geovisor/capas/upd_consolidado.geojson",
+        "sourceUrl": "/geovisor/capas/upd_consolidado.geojson",
         "status": "publicado"
       },
       "name": "Valor promedio del suelo 2007–2019 por UPD (Permisos OPAMSS · P1_PROM)",
       "opacity": 1,
       "source": {
-        "data": "/urbano-sv-amss/geovisor/capas/upd_consolidado.geojson",
+        "data": "/geovisor/capas/upd_consolidado.geojson",
         "type": "geojson",
-        "url": "/urbano-sv-amss/geovisor/capas/upd_consolidado.geojson"
+        "url": "/geovisor/capas/upd_consolidado.geojson"
       },
       "style": {
         "blendMode": "normal",
@@ -966,15 +966,15 @@
       "metadata": {
         "caveat": "Síntesis interperíodo de permisos OPAMSS: Aumento (79 UPD), Disminución (37 UPD), Solo 2020–2026 (30 UPD), Solo 2007–2019 (41 UPD) y Sin datos (239 UPD).",
         "resolution": "426 UPD consolidadas (EPSG:4326)",
-        "sourceUrl": "/urbano-sv-amss/geovisor/capas/upd_consolidado.geojson",
+        "sourceUrl": "/geovisor/capas/upd_consolidado.geojson",
         "status": "publicado"
       },
       "name": "Dinámica y variación de valor del suelo 2007–2019 vs. 2020–2026 (OPAMSS · TENDENCIA / PCT_VAR)",
       "opacity": 1,
       "source": {
-        "data": "/urbano-sv-amss/geovisor/capas/upd_consolidado.geojson",
+        "data": "/geovisor/capas/upd_consolidado.geojson",
         "type": "geojson",
-        "url": "/urbano-sv-amss/geovisor/capas/upd_consolidado.geojson"
+        "url": "/geovisor/capas/upd_consolidado.geojson"
       },
       "style": {
         "blendMode": "normal",
@@ -1115,15 +1115,15 @@
       "metadata": {
         "caveat": "Capa oficial de distritos y nuevos municipios del AMSS (incorporada desde nuevos_municipios_amss).",
         "resolution": "Vectorial oficial OPAMSS (EPSG:4326)",
-        "sourceUrl": "/urbano-sv-amss/geovisor/capas/amss_14_distritos.geojson",
+        "sourceUrl": "/geovisor/capas/amss_14_distritos.geojson",
         "status": "publicado"
       },
       "name": "Límite oficial de los distritos del AMSS y nuevos municipios",
       "opacity": 1,
       "source": {
-        "data": "/urbano-sv-amss/geovisor/capas/amss_14_distritos.geojson",
+        "data": "/geovisor/capas/amss_14_distritos.geojson",
         "type": "geojson",
-        "url": "/urbano-sv-amss/geovisor/capas/amss_14_distritos.geojson"
+        "url": "/geovisor/capas/amss_14_distritos.geojson"
       },
       "style": {
         "blendMode": "normal",
@@ -1264,15 +1264,15 @@
       "metadata": {
         "caveat": "Perímetro exterior de los nuevos municipios del AMSS.",
         "resolution": "Vectorial oficial OPAMSS (EPSG:4326)",
-        "sourceUrl": "/urbano-sv-amss/geovisor/capas/amss_perimetro.geojson",
+        "sourceUrl": "/geovisor/capas/amss_perimetro.geojson",
         "status": "publicado"
       },
       "name": "Perímetro metropolitano del AMSS",
       "opacity": 1,
       "source": {
-        "data": "/urbano-sv-amss/geovisor/capas/amss_perimetro.geojson",
+        "data": "/geovisor/capas/amss_perimetro.geojson",
         "type": "geojson",
-        "url": "/urbano-sv-amss/geovisor/capas/amss_perimetro.geojson"
+        "url": "/geovisor/capas/amss_perimetro.geojson"
       },
       "style": {
         "blendMode": "normal",

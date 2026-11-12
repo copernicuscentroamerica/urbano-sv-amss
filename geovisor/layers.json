@@ -1,7 +1,7 @@
 {
   "schema_version": "1.0.0",
   "project_id": "sv-amss",
-  "title": "AMSS: expansión urbana y transformación del valor del suelo",
+  "title": "AMSS: expansión urbana y modelo espacial de valor del suelo (GEE)",
   "country": {
     "code": "SV",
     "name": "El Salvador"
@@ -17,9 +17,9 @@
       13.6989
     ],
     "is_referential": false,
-    "reference_note": "Unidades de Planificación Detallada (UPD) consolidadas con registros de permisos de OPAMSS (2007–2019 y 2020–2026), precios de oferta inmobiliaria 2025 (web scraping / LISA) y límites distritales del AMSS.",
-    "area_declared": "165.107 ha (≈ 1.651 km²) en 14 distritos y 426 UPD consolidadas.",
-    "scale_label": "Área urbana metropolitana / Unidades de Planificación Detallada (UPD)"
+    "reference_note": "Modelo continuo de valor del suelo en Google Earth Engine (Malla 250 m de 24,292 celdas, Superficie Píxel 20 m y 425 UPDs imputadas con Google Satellite Embeddings V1 + EO), integrado con registros OPAMSS (2007–2026) y oferta inmobiliaria 2025 (LISA).",
+    "area_declared": "148.875 ha (≈ 1.488,8 km²) en malla continua de 24.292 celdas (250 m) y 425 UPDs completas.",
+    "scale_label": "Malla continua metropolitana (250 m) / Píxel (20 m) / Unidades de Planificación Detallada (UPD)"
   },
   "geolibre_integration": {
     "web_app_base_url": "https://web.geolibre.app/",
@@ -28,10 +28,10 @@
     "supports_local_geojson_preview": true
   },
   "planned_controls": [
-    "Selector interactivo de esquemas de leyenda coroplética: Escala Homologada Comparable (USD), Quintiles (P20–P80), Rupturas Naturales (Jenks), Mediana Robusta y Dinámica/LISA.",
-    "Comparación multitemporal del valor del suelo por UPD según permisos de OPAMSS: corte histórico 2007–2019 (P1_PROM) frente al corte reciente 2020–2026 (P2_PROM) y tendencia interperíodo.",
-    " Contraste con precios de mercado 2025 obtenidos por web scraping inmobiliario (promedio_2025) y clusters de autocorrelación espacial de Moran Local (LISA).",
-    "Filtro espacial por los 14 distritos del AMSS y 426 Unidades de Planificación Detallada (UPD)."
+    "Modelo espacial continuo en Google Earth Engine (71 bandas: 64 dimensiones Google Satellite Embeddings V1 + 7 capas físicas EO) desplegado en Malla Continua de 250 m (24,292 celdas), Superficie Píxel a 20 m y 425 UPDs sin vacíos.",
+    "Subpágina analítica dedicada con metodología reproducible, análisis estadístico de correlaciones, interpretación territorial, hoja de ruta de mejora y código fuente completo de Google Earth Engine.",
+    "Selector interactivo de esquemas de leyenda coroplética: Escala Homologada Comparable (USD/m²), Quintiles, Mediana Intra-celda, Tipología Urbana (Consolidado / Periurbano / Rural), Fracción Edificada, Origen (Observado vs. Imputado) y Clusters LISA.",
+    "Comparación multitemporal del valor del suelo por UPD según permisos de OPAMSS (2007–2019 vs. 2020–2026) y oferta inmobiliaria por web scraping 2025."
   ],
   "external_references": [
     {
@@ -43,9 +43,80 @@
   ],
   "layers": [
     {
+      "id": "sv-amss-gee-malla-250m",
+      "title": "Malla Continua 250 m — Valor del Suelo Estimado (Modelo GEE · 24,292 celdas)",
+      "group": "Modelo Satelital GEE (Embeddings V1 + EO)",
+      "format": "geojson",
+      "geometry_type": "polygon",
+      "status": "publicado",
+      "source_path": "geovisor/capas/amss_malla_continua_250m.geojson",
+      "expected_file_hint": "geovisor/capas/amss_malla_continua_250m.geojson",
+      "resolution": "24,292 polígonos de 250 m / 6.25 ha · Cobertura 100% AMSS (EPSG:4326)",
+      "style": {
+        "fill_color": "auto_gee_malla_250m",
+        "fill_opacity": 0.82,
+        "stroke_color": "#1E293B",
+        "stroke_width": 0.2,
+        "visible_by_default": true,
+        "thematic_field": "VAL_EST_M2",
+        "default_scheme": "homologated"
+      },
+      "caveat": "Estimación continua en USD/m² agregada desde el modelo Random Forest a 20 m entrenado con Google Satellite Embeddings V1 (64 bandas) + Open Buildings 2.5D, ESA WorldCover, VIIRS DNB y Copernicus DEM GLO-30."
+    },
+    {
+      "id": "sv-amss-gee-upd-425",
+      "title": "UPDs 425 Completas — Valor Integrado e Imputación Satelital GEE (0 vacíos)",
+      "group": "Modelo Satelital GEE (Embeddings V1 + EO)",
+      "format": "geojson",
+      "geometry_type": "polygon",
+      "status": "publicado",
+      "source_path": "geovisor/capas/amss_upd_425_imputadas.geojson",
+      "expected_file_hint": "geovisor/capas/amss_upd_425_imputadas.geojson",
+      "resolution": "425 UPDs válidas · 281 observadas + 144 imputadas por GEE (EPSG:4326)",
+      "style": {
+        "fill_color": "auto_gee_upd_425",
+        "fill_opacity": 0.78,
+        "stroke_color": "#1E293B",
+        "stroke_width": 0.8,
+        "visible_by_default": false,
+        "thematic_field": "VAL_FIN_M2",
+        "default_scheme": "homologated"
+      },
+      "caveat": "Integra el valor observado/calibrado 2025 en 281 UPDs (ORIGEN_FIN = OBSERVADO) e imputa mediante el modelo GEE las 144 UPDs sin muestra previa (ORIGEN_FIN = IMPUTADO_MODELO_GEE)."
+    },
+    {
+      "id": "sv-amss-gee-pixel-20m",
+      "title": "Superficie Continua a Nivel de Píxel 20 m — Modelo GEE (Raster USD/m²)",
+      "group": "Modelo Satelital GEE (Embeddings V1 + EO)",
+      "format": "image_overlay",
+      "geometry_type": "raster",
+      "status": "publicado",
+      "source_path": "geovisor/data/amss_pixel_20m_urbano.png",
+      "alt_source_path": "geovisor/data/amss_pixel_20m_potencial.png",
+      "cog_path": "geovisor/capas/amss_valor_suelo_pixel_20m.tif",
+      "bounds": [
+        -89.628689,
+        13.418135,
+        -89.025201,
+        13.920473
+      ],
+      "expected_file_hint": "geovisor/capas/amss_valor_suelo_pixel_20m.tif",
+      "resolution": "Píxel 20 m · 3.85 millones de píxeles válidos (COG GeoTIFF + Vista Web Mercator)",
+      "style": {
+        "fill_color": "auto_gee_pixel_20m",
+        "fill_opacity": 0.85,
+        "stroke_color": "#0F172A",
+        "stroke_width": 0,
+        "visible_by_default": false,
+        "thematic_field": "valor_urbano_usd_m2",
+        "default_scheme": "urbano_desarrollable"
+      },
+      "caveat": "Superficie raster continua de valor del suelo a 20 m ($8.66 a $471.13 USD/m²). Permite alternar entre suelo urbano/desarrollable (pendiente < 35° sin agua) y potencial continuo completo."
+    },
+    {
       "id": "sv-amss-lisa-precios-2025",
       "title": "Precios de oferta inmobiliaria 2025 y análisis LISA (Web Scraping · promedio_2025)",
-      "group": "Mercado y gestión del suelo",
+      "group": "Mercado y gestión del suelo (Registros base)",
       "format": "geojson",
       "geometry_type": "polygon",
       "status": "publicado",
@@ -57,7 +128,7 @@
         "fill_opacity": 0.76,
         "stroke_color": "#1E293B",
         "stroke_width": 0.9,
-        "visible_by_default": true,
+        "visible_by_default": false,
         "thematic_field": "promedio_2025",
         "default_scheme": "homologated"
       },
@@ -66,7 +137,7 @@
     {
       "id": "sv-amss-upd-2020-2026",
       "title": "Valor promedio del suelo 2020–2026 por UPD (Permisos OPAMSS · P2_PROM)",
-      "group": "Mercado y gestión del suelo",
+      "group": "Mercado y gestión del suelo (Registros base)",
       "format": "geojson",
       "geometry_type": "polygon",
       "status": "publicado",
@@ -87,7 +158,7 @@
     {
       "id": "sv-amss-upd-2007-2019",
       "title": "Valor promedio del suelo 2007–2019 por UPD (Permisos OPAMSS · P1_PROM)",
-      "group": "Mercado y gestión del suelo",
+      "group": "Mercado y gestión del suelo (Registros base)",
       "format": "geojson",
       "geometry_type": "polygon",
       "status": "publicado",
@@ -138,9 +209,9 @@
       "resolution": "Vectorial oficial OPAMSS (EPSG:4326)",
       "style": {
         "fill_color": "#007F8B",
-        "fill_opacity": 0.04,
+        "fill_opacity": 0.03,
         "stroke_color": "#14283F",
-        "stroke_width": 1.8,
+        "stroke_width": 1.6,
         "visible_by_default": true,
         "interactive_fill": false
       },
@@ -158,9 +229,9 @@
       "resolution": "Vectorial oficial OPAMSS (EPSG:4326)",
       "style": {
         "fill_color": "#14283F",
-        "fill_opacity": 0.02,
+        "fill_opacity": 0.01,
         "stroke_color": "#C9DA4D",
-        "stroke_width": 2.5,
+        "stroke_width": 2.4,
         "visible_by_default": true,
         "interactive_fill": false
       },

@@ -89,6 +89,7 @@
   setupCatalogFilter("[data-catalog-atlas]");
   setupCatalogFilter("[data-catalog-progress]");
   setupCatalogFilter("[data-catalog-faq]");
+  setupCatalogFilter("[data-catalog-correlations]");
 
   // 3. Pestañas de días en Agenda
   var dayTabs = Array.prototype.slice.call(document.querySelectorAll("[data-day-tab]"));

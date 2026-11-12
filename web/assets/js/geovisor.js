@@ -1184,8 +1184,28 @@
 
     // Registro de capas cargadas dinámicamente desde geovisor/capas/ o desde archivo local
     var dynamicFolderLayers = {}; // key: fileName -> { geojson, color, visible }
+    var loadedProjectGeoJsons = {}; // cache en memoria para evitar re-descargar GeoJSON al cambiar mapa base
     var localGeoJsonCache = null;
     var initialBoundsFitted = false;
+
+    function findReferenceOverlayLayerId(forBoundaryLayer) {
+      var candidates = forBoundaryLayer
+        ? ["study-area-mask-fill", "study-area-mask-outline"]
+        : [
+            "sv-amss-perimetro-distritos-fill",
+            "sv-amss-perimetro-distritos-line",
+            "sv-amss-perimetro-metropolitano-fill",
+            "sv-amss-perimetro-metropolitano-line",
+            "study-area-mask-fill",
+            "study-area-mask-outline"
+          ];
+      for (var i = 0; i < candidates.length; i++) {
+        if (mapInstance && mapInstance.getLayer(candidates[i])) {
+          return candidates[i];
+        }
+      }
+      return undefined;
+    }
 
     function attachFeatureClickPopup(layerId, badgeTitle, defaultTitle) {
       mapInstance.on("click", layerId, function (e) {
@@ -1195,7 +1215,39 @@
         var props = e.features[0].properties || {};
         var nameVal = props.nombre || props.NAME_UPD || props.name || props.NAM || defaultTitle;
         var rows = [];
-        if (props.promedio_2025 !== undefined && props.promedio_2025 !== null) {
+        if (props.ID_CELDA !== undefined && props.ID_CELDA !== null) {
+          nameVal = "Celda " + String(props.ID_CELDA) + (props.DISTRITO ? " · " + String(props.DISTRITO) : "");
+          rows.push(["Valor estimado (Media celda)", "$" + Number(props.VAL_EST_M2 || 0).toFixed(2) + " USD/m²"]);
+          rows.push([
+            "Mediana / Potencial celda",
+            "$" + Number(props.VAL_MED_M2 || 0).toFixed(2) + " / $" + Number(props.VAL_POT_M2 || 0).toFixed(2) + " USD/m²"
+          ]);
+          rows.push(["Dispersión intra-celda (DE)", "± $" + Number(props.VAL_STD_M2 || 0).toFixed(2) + " USD/m²"]);
+          rows.push(["Tipología morfológica GEE", String(props.TIPO_SUELO || "—").replace(/_/g, " ")]);
+          var pctEd = props.PCT_EDIF !== undefined && props.PCT_EDIF !== null
+            ? Number(props.PCT_EDIF)
+            : Number(props.FRAC_EDIF || 0) * 100;
+          rows.push(["Fracción construida (10 m)", pctEd.toFixed(1) + "%"]);
+          rows.push(["Altura media 2.5D (Open Buildings)", Number(props.ALT_EDIF_M || 0).toFixed(2) + " m"]);
+          rows.push(["Pendiente media (GLO-30)", Number(props.PEND_DEG || 0).toFixed(1) + "°"]);
+          rows.push(["Distrito / Superficie", (props.DISTRITO || "AMSS") + " · " + Number(props.AREA_HA || 0).toFixed(2) + " ha"]);
+        } else if (props.ORIGEN_FIN !== undefined && props.ORIGEN_FIN !== null) {
+          nameVal = (props.NAME_UPD || ("UPD #" + (props.OBJECTID || ""))) + (props.DISTRITO ? " · " + String(props.DISTRITO) : "");
+          rows.push(["Valor integrado 2025 (VAL_FIN_M2)", "$" + Number(props.VAL_FIN_M2 || 0).toFixed(2) + " USD/m²"]);
+          rows.push([
+            "Fuente de consolidación",
+            props.ORIGEN_FIN === "OBSERVADO" ? "Observado / Calibrado 2025" : "Imputado por Modelo Satelital GEE"
+          ]);
+          rows.push(["Predicción satelital GEE (VAL_MOD_M2)", "$" + Number(props.VAL_MOD_M2 || 0).toFixed(2) + " USD/m²"]);
+          if (props.ORIGEN_FIN === "OBSERVADO" && props.DIF_MOD_M2 !== undefined && props.DIF_MOD_M2 !== null && props.DIF_MOD_M2 !== "") {
+            var difNum = Number(props.DIF_MOD_M2);
+            if (!isNaN(difNum)) {
+              rows.push(["Residual (Modelo − Observado)", (difNum >= 0 ? "+" : "") + "$" + difNum.toFixed(2) + " USD/m²"]);
+            }
+          }
+          rows.push(["Tipología UPD / Superficie", (props.TIPO || "—") + " · " + Number(props.AREA_HA || 0).toFixed(2) + " ha"]);
+          rows.push(["Distrito / Municipio", (props.DISTRITO || "—") + (props.MUNICIPIO ? " · " + props.MUNICIPIO : "")]);
+        } else if (props.promedio_2025 !== undefined && props.promedio_2025 !== null) {
           rows.push(["Precio promedio 2025 (Web Scraping)", "$" + Number(props.promedio_2025).toFixed(2) + " USD"]);
           if (props.rango_2025) rows.push(["Rango homologado 2025", String(props.rango_2025)]);
           if (props.cuadrante_) rows.push(["Cuadrante LISA (Moran)", String(props.cuadrante_)]);
@@ -1232,7 +1284,7 @@
         }
         if (!rows.length) rows.push(["Estado", "Capa vectorial cargada"]);
         var dom = createSafePopupElement(String(nameVal), rows.slice(0, 10), badgeTitle);
-        new window.maplibregl.Popup({ maxWidth: "350px" }).setLngLat(e.lngLat).setDOMContent(dom).addTo(mapInstance);
+        new window.maplibregl.Popup({ maxWidth: "360px" }).setLngLat(e.lngLat).setDOMContent(dom).addTo(mapInstance);
       });
       mapInstance.on("mouseenter", layerId, function () {
         mapInstance.getCanvas().style.cursor = "pointer";
@@ -1255,7 +1307,172 @@
       ];
     }
 
+    function makeNumericStepZeroOkExpr(propName, breaks, colors, noDataColor) {
+      var stepArr = ["step", ["coalesce", ["to-number", ["get", propName]], 0], colors[0]];
+      for (var i = 0; i < breaks.length; i++) {
+        stepArr.push(breaks[i], colors[i + 1]);
+      }
+      return [
+        "case",
+        ["all", ["has", propName], ["!=", ["get", propName], null], [">=", ["to-number", ["get", propName]], 0]],
+        stepArr,
+        noDataColor || "#CBD5E1"
+      ];
+    }
+
     var THEMATIC_SCHEMES = {
+      "auto_gee_malla_250m": {
+        "homologated": {
+          label: "Opción 1 · Escala Homologada de Valor del Suelo (USD/m² · VAL_EST_M2)",
+          expr: makeNumericStepExpr("VAL_EST_M2", [30, 50, 100, 175, 300], ["#FEF0D9", "#FDD49E", "#FDBB84", "#FC8D59", "#E34A33", "#990000"], "#CBD5E1"),
+          items: [
+            { color: "#FEF0D9", label: "Reserva / Rural (≤ $30 · 8,557 celdas)" },
+            { color: "#FDD49E", label: "Periurbano Bajo ($30–$50 · 11,225 celdas)" },
+            { color: "#FDBB84", label: "Transición ($50–$100 · 2,215 celdas)" },
+            { color: "#FC8D59", label: "Urbano Medio ($100–$175 · 1,218 celdas)" },
+            { color: "#E34A33", label: "Urbano Alto ($175–$300 · 836 celdas)" },
+            { color: "#990000", label: "Nodos Prime (> $300 · 241 celdas)" }
+          ]
+        },
+        "quantiles": {
+          label: "Opción 2 · Quintiles Metropolitanos 250 m (P20, P40, P60, P80 · 4,858 celdas/clase)",
+          expr: makeNumericStepExpr("VAL_EST_M2", [27.46, 30.73, 34.73, 46.33], ["#FDE725", "#5EC962", "#21918C", "#3B528B", "#440154"], "#CBD5E1"),
+          items: [
+            { color: "#FDE725", label: "Q1 (≤ $27.46/m²)" },
+            { color: "#5EC962", label: "Q2 ($27.47–$30.73/m²)" },
+            { color: "#21918C", label: "Q3 ($30.74–$34.73/m²)" },
+            { color: "#3B528B", label: "Q4 ($34.74–$46.33/m²)" },
+            { color: "#440154", label: "Q5 (> $46.33 hasta $375.90/m²)" }
+          ]
+        },
+        "median": {
+          label: "Opción 3 · Mediana Intra-Celda a 20 m (VAL_MED_M2 · resistente a bordes)",
+          expr: makeNumericStepExpr("VAL_MED_M2", [30, 50, 100, 175, 300], ["#FEF0D9", "#FDD49E", "#FDBB84", "#FC8D59", "#E34A33", "#990000"], "#CBD5E1"),
+          items: [
+            { color: "#FEF0D9", label: "Mediana ≤ $30/m²" },
+            { color: "#FDD49E", label: "Mediana $30–$50/m²" },
+            { color: "#FDBB84", label: "Mediana $50–$100/m²" },
+            { color: "#FC8D59", label: "Mediana $100–$175/m²" },
+            { color: "#E34A33", label: "Mediana $175–$300/m²" },
+            { color: "#990000", label: "Mediana > $300/m²" }
+          ]
+        },
+        "tipologia": {
+          label: "Opción 4 · Régimen Morfológico Territorial (TIPO_SUELO)",
+          expr: [
+            "match",
+            ["get", "TIPO_SUELO"],
+            "URBANO_CONSOLIDADO", "#B91C1C",
+            "PERIURBANO_TRANSICION", "#F59E0B",
+            "RURAL_RESERVA", "#0F766E",
+            "#CBD5E1"
+          ],
+          items: [
+            { color: "#B91C1C", label: "Urbano Consolidado (2,215 celdas · Media $187.3/m²)" },
+            { color: "#F59E0B", label: "Periurbano en Transición (1,571 celdas · Media $74.4/m²)" },
+            { color: "#0F766E", label: "Rural / Reserva Ambiental (20,506 celdas · Media $33.4/m²)" }
+          ]
+        },
+        "edificacion": {
+          label: "Opción 5 · Intensidad de Huella Construida a 10 m (PCT_EDIF %)",
+          expr: makeNumericStepZeroOkExpr("PCT_EDIF", [5, 20, 45, 75], ["#F1F5F9", "#BAE6FD", "#38BDF8", "#0284C7", "#1E3A8A"], "#F1F5F9"),
+          items: [
+            { color: "#F1F5F9", label: "Sin urbanizar (< 5%)" },
+            { color: "#BAE6FD", label: "Disperso (5%–20%)" },
+            { color: "#38BDF8", label: "Periurbano (20%–45%)" },
+            { color: "#0284C7", label: "Consolidado (45%–75%)" },
+            { color: "#1E3A8A", label: "Alta compacidad (> 75%)" }
+          ]
+        },
+        "incertidumbre": {
+          label: "Opción 6 · Heterogeneidad Intra-Celda (Desviación Estándar VAL_STD_M2)",
+          expr: makeNumericStepZeroOkExpr("VAL_STD_M2", [4, 7, 15, 30], ["#F8FAFC", "#DDD6FE", "#A78BFA", "#7C3AED", "#4C1D95"], "#F8FAFC"),
+          items: [
+            { color: "#F8FAFC", label: "Muy homogénea (≤ $4/m²)" },
+            { color: "#DDD6FE", label: "Baja dispersión ($4–$7/m²)" },
+            { color: "#A78BFA", label: "Transición ($7–$15/m²)" },
+            { color: "#7C3AED", label: "Gradiente marcado ($15–$30/m²)" },
+            { color: "#4C1D95", label: "Borde de alto contraste (> $30/m²)" }
+          ]
+        }
+      },
+      "auto_gee_upd_425": {
+        "homologated": {
+          label: "Opción 1 · Valor Integrado 2025 sin Vacíos (425 UPDs · VAL_FIN_M2)",
+          expr: makeNumericStepExpr("VAL_FIN_M2", [50, 100, 175, 300], ["#FEF0D9", "#FDCC8A", "#FC8D59", "#E34A33", "#B30000"], "#CBD5E1"),
+          items: [
+            { color: "#FEF0D9", label: "Bajo (≤ $50/m² · 177 UPD)" },
+            { color: "#FDCC8A", label: "Medio-Bajo ($50–$100/m² · 91 UPD)" },
+            { color: "#FC8D59", label: "Medio ($100–$175/m² · 67 UPD)" },
+            { color: "#E34A33", label: "Medio-Alto ($175–$300/m² · 53 UPD)" },
+            { color: "#B30000", label: "Alto (> $300/m² · 37 UPD)" }
+          ]
+        },
+        "origen": {
+          label: "Opción 2 · Cobertura Empírica vs. Imputación Satelital GEE (ORIGEN_FIN)",
+          expr: [
+            "match",
+            ["get", "ORIGEN_FIN"],
+            "OBSERVADO", "#0F766E",
+            "IMPUTADO_MODELO_GEE", "#F59E0B",
+            "#94A3B8"
+          ],
+          items: [
+            { color: "#0F766E", label: "Observado / Calibrado 2025 (281 UPD · 66.1%)" },
+            { color: "#F59E0B", label: "Imputado por Modelo GEE (144 UPD · 33.9% · 57,648 ha)" }
+          ]
+        },
+        "modelo_puro": {
+          label: "Opción 3 · Predicción Satelital Pura GEE en las 425 UPDs (VAL_MOD_M2)",
+          expr: makeNumericStepExpr("VAL_MOD_M2", [50, 100, 175, 300], ["#FEF0D9", "#FDCC8A", "#FC8D59", "#E34A33", "#B30000"], "#CBD5E1"),
+          items: [
+            { color: "#FEF0D9", label: "Modelo ≤ $50/m²" },
+            { color: "#FDCC8A", label: "Modelo $50–$100/m²" },
+            { color: "#FC8D59", label: "Modelo $100–$175/m²" },
+            { color: "#E34A33", label: "Modelo $175–$300/m²" },
+            { color: "#B30000", label: "Modelo > $300/m²" }
+          ]
+        },
+        "quantiles": {
+          label: "Opción 4 · Quintiles de las 425 UPDs Completas (P20, P40, P60, P80)",
+          expr: makeNumericStepExpr("VAL_FIN_M2", [26.37, 48.67, 89.40, 189.98], ["#FDE725", "#5EC962", "#21918C", "#3B528B", "#440154"], "#CBD5E1"),
+          items: [
+            { color: "#FDE725", label: "Q1 (≤ $26.37/m² · 85 UPD)" },
+            { color: "#5EC962", label: "Q2 ($26.38–$48.67/m² · 85 UPD)" },
+            { color: "#21918C", label: "Q3 ($48.68–$89.40/m² · 85 UPD)" },
+            { color: "#3B528B", label: "Q4 ($89.41–$189.98/m² · 85 UPD)" },
+            { color: "#440154", label: "Q5 (> $189.98/m² · 85 UPD)" }
+          ]
+        }
+      },
+      "auto_gee_pixel_20m": {
+        "urbano_desarrollable": {
+          label: "Opción 1 · Superficie Píxel 20 m — Suelo Urbano y Desarrollable (Pendiente < 35°)",
+          expr: "#E34A33",
+          items: [
+            { color: "#FEF0D9", label: "≤ $30/m² (Reserva / Rural)" },
+            { color: "#FDD49E", label: "$30–$50/m² (Periurbano)" },
+            { color: "#FDBB84", label: "$50–$100/m² (Transición)" },
+            { color: "#FC8D59", label: "$100–$175/m² (Urbano Medio)" },
+            { color: "#E34A33", label: "$175–$300/m² (Urbano Alto)" },
+            { color: "#B30000", label: "$300–$420/m² (Ejes Centrales)" },
+            { color: "#67001F", label: "> $420/m² (Máx. $471.13/m²)" }
+          ]
+        },
+        "potencial_continuo": {
+          label: "Opción 2 · Superficie Píxel 20 m — Potencial Continuo Completo (Sin máscara topográfica)",
+          expr: "#E34A33",
+          items: [
+            { color: "#FEF0D9", label: "≤ $30/m² (Fondo montañoso/rural)" },
+            { color: "#FDD49E", label: "$30–$50/m²" },
+            { color: "#FDBB84", label: "$50–$100/m²" },
+            { color: "#FC8D59", label: "$100–$175/m²" },
+            { color: "#E34A33", label: "$175–$300/m²" },
+            { color: "#B30000", label: "$300–$420/m²" },
+            { color: "#67001F", label: "> $420/m² (Nodos Prime)" }
+          ]
+        }
+      },
       "auto_lisa_2025": {
         "homologated": {
           label: "Opción 1 · Escala Homologada Comparable (5 rangos fijos USD)",
@@ -1547,7 +1764,25 @@
         renderLegendSwatchesDom(swatchBox, fillColor, newScheme);
       }
 
-      if (mapInstance && mapInstance.getLayer(layerId + "-fill")) {
+      if (lyr.format === "image_overlay" && mapInstance && mapInstance.getSource("src-" + layerId)) {
+        var targetRel = (newScheme === "potencial_continuo" && lyr.alt_source_path) ? lyr.alt_source_path : lyr.source_path;
+        var resolvedImg = /^https?:\/\//i.test(targetRel)
+          ? targetRel
+          : new URL(targetRel, window.location.origin + baseUrl).href;
+        var bds = Array.isArray(lyr.bounds) && lyr.bounds.length === 4 ? lyr.bounds : null;
+        var srcObj = mapInstance.getSource("src-" + layerId);
+        if (srcObj && typeof srcObj.updateImage === "function" && bds) {
+          srcObj.updateImage({
+            url: resolvedImg,
+            coordinates: [
+              [bds[0], bds[3]],
+              [bds[2], bds[3]],
+              [bds[2], bds[1]],
+              [bds[0], bds[1]]
+            ]
+          });
+        }
+      } else if (mapInstance && mapInstance.getLayer(layerId + "-fill")) {
         mapInstance.setPaintProperty(layerId + "-fill", "fill-color", resolveThematicFillExpr(fillColor, newScheme));
       }
 
@@ -1620,6 +1855,22 @@
     }
 
     var SCENARIO_DEFS = {
+      "gee-malla-250m": {
+        activeLayers: ["sv-amss-gee-malla-250m"],
+        schemes: { "sv-amss-gee-malla-250m": "homologated" }
+      },
+      "gee-malla-tipologia": {
+        activeLayers: ["sv-amss-gee-malla-250m"],
+        schemes: { "sv-amss-gee-malla-250m": "tipologia" }
+      },
+      "gee-upd-425": {
+        activeLayers: ["sv-amss-gee-upd-425"],
+        schemes: { "sv-amss-gee-upd-425": "homologated" }
+      },
+      "gee-pixel-20m": {
+        activeLayers: ["sv-amss-gee-pixel-20m"],
+        schemes: { "sv-amss-gee-pixel-20m": "urbano_desarrollable" }
+      },
       "mercado-2025-homol": {
         activeLayers: ["sv-amss-lisa-precios-2025"],
         schemes: { "sv-amss-lisa-precios-2025": "homologated" }
@@ -1658,6 +1909,9 @@
       });
 
       var soilLayerIds = [
+        "sv-amss-gee-malla-250m",
+        "sv-amss-gee-upd-425",
+        "sv-amss-gee-pixel-20m",
         "sv-amss-lisa-precios-2025",
         "sv-amss-upd-2020-2026",
         "sv-amss-upd-2007-2019",
@@ -1673,7 +1927,7 @@
         }
         if (mapInstance) {
           var vis = shouldShow ? "visible" : "none";
-          ["-fill", "-line", "-pt"].forEach(function (suf) {
+          ["-fill", "-line", "-pt", "-raster"].forEach(function (suf) {
             if (mapInstance.getLayer(lid + suf)) {
               mapInstance.setLayoutProperty(lid + suf, "visibility", vis);
             }
@@ -1697,6 +1951,16 @@
       if (mapInstance.getLayer(prefixId + "-pt")) mapInstance.removeLayer(prefixId + "-pt");
       if (mapInstance.getSource(srcId)) mapInstance.removeSource(srcId);
 
+      var isBoundary = opts.interactive_fill === false;
+      var beforeLayerId = findReferenceOverlayLayerId(isBoundary);
+      var linePaint = strokeWidth <= 0.35
+        ? {
+            "line-color": strokeColor,
+            "line-width": ["interpolate", ["linear"], ["zoom"], 9, 0.04, 11.5, 0.14, 13.5, 0.35, 16, 0.85],
+            "line-opacity": ["interpolate", ["linear"], ["zoom"], 9, 0.18, 12, 0.38, 15, 0.65]
+          }
+        : { "line-color": strokeColor, "line-width": strokeWidth };
+
       mapInstance.addSource(srcId, { type: "geojson", data: dataOrUrl });
       mapInstance.addLayer({
         id: prefixId + "-fill",
@@ -1705,14 +1969,14 @@
         filter: ["match", ["geometry-type"], ["Polygon", "MultiPolygon"], true, false],
         layout: { visibility: initVis },
         paint: { "fill-color": effectiveFill, "fill-opacity": fillOpacity }
-      });
+      }, beforeLayerId);
       mapInstance.addLayer({
         id: prefixId + "-line",
         type: "line",
         source: srcId,
         layout: { visibility: initVis },
-        paint: { "line-color": strokeColor, "line-width": strokeWidth }
-      });
+        paint: linePaint
+      }, beforeLayerId);
       mapInstance.addLayer({
         id: prefixId + "-pt",
         type: "circle",
@@ -1725,12 +1989,41 @@
           "circle-stroke-color": strokeColor,
           "circle-stroke-width": 2
         }
-      });
+      }, beforeLayerId);
 
       if (fillOpacity > 0.01 && opts.interactive_fill !== false) {
         attachFeatureClickPopup(prefixId + "-fill", badgeLabel, layerTitle);
       }
       attachFeatureClickPopup(prefixId + "-pt", badgeLabel, layerTitle);
+    }
+
+    function wireThematicControlsForLayer(lyr, fillColor, styleOpts) {
+      if (!THEMATIC_SCHEMES[fillColor]) return;
+      var schemeSelect = document.querySelector('[data-layer-scheme="' + lyr.id + '"]');
+      var swatchBox = document.querySelector('[data-layer-swatches="' + lyr.id + '"]');
+      var initScheme = (styleOpts.active_scheme || styleOpts.default_scheme || Object.keys(THEMATIC_SCHEMES[fillColor])[0]);
+      renderLegendSwatchesDom(swatchBox, fillColor, initScheme);
+      if (schemeSelect) {
+        schemeSelect.value = initScheme;
+        schemeSelect.onchange = function () {
+          setLayerThematicScheme(lyr.id, schemeSelect.value);
+        };
+      }
+      var pillBox = document.querySelector('[data-pill-layer="' + lyr.id + '"]');
+      if (pillBox) {
+        var pills = pillBox.querySelectorAll(".gv-scheme-pill");
+        pills.forEach(function (pill) {
+          if (pill.getAttribute("data-scheme-val") === initScheme) {
+            pill.classList.add("is-active");
+          } else {
+            pill.classList.remove("is-active");
+          }
+          pill.onclick = function () {
+            var sVal = pill.getAttribute("data-scheme-val");
+            if (sVal) setLayerThematicScheme(lyr.id, sVal);
+          };
+        });
+      }
     }
 
     function addActiveProjectLayers() {
@@ -1750,46 +2043,53 @@
           var fillColor = (lyr.style && lyr.style.fill_color) || "#007F8B";
           var fillOpacity = (lyr.style && lyr.style.fill_opacity) !== undefined ? lyr.style.fill_opacity : 0.22;
           var strokeColor = (lyr.style && lyr.style.stroke_color) || "#14283F";
-          var strokeWidth = (lyr.style && lyr.style.stroke_width) || 2;
+          var strokeWidth = (lyr.style && lyr.style.stroke_width) !== undefined ? lyr.style.stroke_width : 2;
           var isVisibleByDefault = !(lyr.style && lyr.style.visible_by_default === false);
           var styleOpts = Object.assign({}, lyr.style || {});
 
-          fetch(resolvedSource)
-            .then(function (r) {
-              return r.ok ? r.json() : null;
-            })
-            .then(function (gj) {
-              if (!gj) return;
-              renderGeoJsonSourceLayers(
-                srcId,
-                lyr.id,
-                gj,
-                fillColor,
-                fillOpacity,
-                strokeColor,
-                strokeWidth,
-                "CAPA DEL PROYECTO · " + (lyr.status || "").toUpperCase(),
-                lyr.title,
-                styleOpts
-              );
-              if (!initialBoundsFitted && isVisibleByDefault) {
-                var b = computeGeoJsonBounds(gj);
-                if (b) {
-                  if (!combinedBounds) {
-                    combinedBounds = [[b[0][0], b[0][1]], [b[1][0], b[1][1]]];
-                  } else {
-                    combinedBounds[0][0] = Math.min(combinedBounds[0][0], b[0][0]);
-                    combinedBounds[0][1] = Math.min(combinedBounds[0][1], b[0][1]);
-                    combinedBounds[1][0] = Math.max(combinedBounds[1][0], b[1][0]);
-                    combinedBounds[1][1] = Math.max(combinedBounds[1][1], b[1][1]);
-                  }
-                  mapInstance.fitBounds(combinedBounds, { padding: 42, maxZoom: 15.2, duration: 0 });
+          var mountGeoJson = function (gj) {
+            if (!gj) return;
+            loadedProjectGeoJsons[lyr.id] = gj;
+            renderGeoJsonSourceLayers(
+              srcId,
+              lyr.id,
+              gj,
+              fillColor,
+              fillOpacity,
+              strokeColor,
+              strokeWidth,
+              "CAPA DEL PROYECTO · " + (lyr.status || "").toUpperCase(),
+              lyr.title,
+              styleOpts
+            );
+            if (!initialBoundsFitted && isVisibleByDefault) {
+              var b = computeGeoJsonBounds(gj);
+              if (b) {
+                if (!combinedBounds) {
+                  combinedBounds = [[b[0][0], b[0][1]], [b[1][0], b[1][1]]];
+                } else {
+                  combinedBounds[0][0] = Math.min(combinedBounds[0][0], b[0][0]);
+                  combinedBounds[0][1] = Math.min(combinedBounds[0][1], b[0][1]);
+                  combinedBounds[1][0] = Math.max(combinedBounds[1][0], b[1][0]);
+                  combinedBounds[1][1] = Math.max(combinedBounds[1][1], b[1][1]);
                 }
+                mapInstance.fitBounds(combinedBounds, { padding: 42, maxZoom: 15.2, duration: 0 });
               }
-            })
-            .catch(function (err) {
-              if (window.console && console.warn) console.warn("Error al cargar capa del geovisor:", lyr.id, err);
-            });
+            }
+          };
+
+          if (loadedProjectGeoJsons[lyr.id]) {
+            mountGeoJson(loadedProjectGeoJsons[lyr.id]);
+          } else {
+            fetch(resolvedSource)
+              .then(function (r) {
+                return r.ok ? r.json() : null;
+              })
+              .then(mountGeoJson)
+              .catch(function (err) {
+                if (window.console && console.warn) console.warn("Error al cargar capa del geovisor:", lyr.id, err);
+              });
+          }
 
           var chk = document.querySelector('[data-layer-toggle="' + lyr.id + '"]');
           if (chk) {
@@ -1820,33 +2120,70 @@
             };
           }
 
-          if (THEMATIC_SCHEMES[fillColor]) {
-            var schemeSelect = document.querySelector('[data-layer-scheme="' + lyr.id + '"]');
-            var swatchBox = document.querySelector('[data-layer-swatches="' + lyr.id + '"]');
-            var initScheme = (styleOpts.active_scheme || styleOpts.default_scheme || Object.keys(THEMATIC_SCHEMES[fillColor])[0]);
-            renderLegendSwatchesDom(swatchBox, fillColor, initScheme);
-            if (schemeSelect) {
-              schemeSelect.value = initScheme;
-              schemeSelect.onchange = function () {
-                setLayerThematicScheme(lyr.id, schemeSelect.value);
-              };
+          wireThematicControlsForLayer(lyr, fillColor, styleOpts);
+        } else if (lyr.format === "image_overlay" && Array.isArray(lyr.bounds) && lyr.bounds.length === 4) {
+          var imgFillColor = (lyr.style && lyr.style.fill_color) || "auto_gee_pixel_20m";
+          var imgOpacity = (lyr.style && lyr.style.fill_opacity) !== undefined ? lyr.style.fill_opacity : 0.85;
+          var imgVisDefault = !(lyr.style && lyr.style.visible_by_default === false);
+          var imgStyleOpts = Object.assign({}, lyr.style || {});
+          var activeImgScheme = imgStyleOpts.active_scheme || imgStyleOpts.default_scheme || "urbano_desarrollable";
+          var targetImgRel = (activeImgScheme === "potencial_continuo" && lyr.alt_source_path) ? lyr.alt_source_path : lyr.source_path;
+          var resolvedImgUrl = /^https?:\/\//i.test(targetImgRel)
+            ? targetImgRel
+            : new URL(targetImgRel, window.location.origin + baseUrl).href;
+
+          var chkImg = document.querySelector('[data-layer-toggle="' + lyr.id + '"]');
+          if (chkImg) {
+            chkImg.disabled = false;
+            if (!chkImg.hasAttribute("data-user-modified")) {
+              chkImg.checked = imgVisDefault;
             }
-            var pillBox = document.querySelector('[data-pill-layer="' + lyr.id + '"]');
-            if (pillBox) {
-              var pills = pillBox.querySelectorAll(".gv-scheme-pill");
-              pills.forEach(function (pill) {
-                if (pill.getAttribute("data-scheme-val") === initScheme) {
-                  pill.classList.add("is-active");
-                } else {
-                  pill.classList.remove("is-active");
-                }
-                pill.onclick = function () {
-                  var sVal = pill.getAttribute("data-scheme-val");
-                  if (sVal) setLayerThematicScheme(lyr.id, sVal);
-                };
-              });
-            }
+            chkImg.onchange = function () {
+              chkImg.setAttribute("data-user-modified", "true");
+              var vis = chkImg.checked ? "visible" : "none";
+              if (mapInstance.getLayer(lyr.id + "-raster")) {
+                mapInstance.setLayoutProperty(lyr.id + "-raster", "visibility", vis);
+              }
+              updateFloatingMapLegend();
+            };
           }
+          var initImgVis = chkImg ? (chkImg.checked ? "visible" : "none") : (imgVisDefault ? "visible" : "none");
+          var b = lyr.bounds; // [west, south, east, north]
+          var quad = [
+            [b[0], b[3]],
+            [b[2], b[3]],
+            [b[2], b[1]],
+            [b[0], b[1]]
+          ];
+
+          if (mapInstance.getLayer(lyr.id + "-raster")) mapInstance.removeLayer(lyr.id + "-raster");
+          if (mapInstance.getSource(srcId)) mapInstance.removeSource(srcId);
+          mapInstance.addSource(srcId, {
+            type: "image",
+            url: resolvedImgUrl,
+            coordinates: quad
+          });
+          mapInstance.addLayer({
+            id: lyr.id + "-raster",
+            type: "raster",
+            source: srcId,
+            layout: { visibility: initImgVis },
+            paint: { "raster-opacity": imgOpacity, "raster-resampling": "linear" }
+          }, findReferenceOverlayLayerId(false));
+
+          var sliderImg = document.querySelector('[data-layer-opacity="' + lyr.id + '"]');
+          if (sliderImg) {
+            sliderImg.disabled = false;
+            sliderImg.value = String(imgOpacity);
+            sliderImg.oninput = function () {
+              var op = parseFloat(sliderImg.value);
+              if (mapInstance.getLayer(lyr.id + "-raster")) {
+                mapInstance.setPaintProperty(lyr.id + "-raster", "raster-opacity", op);
+              }
+            };
+          }
+
+          wireThematicControlsForLayer(lyr, imgFillColor, imgStyleOpts);
         } else if (lyr.format === "xyz_or_cog" && resolvedSource.indexOf("{z}") !== -1) {
           mapInstance.addSource(srcId, { type: "raster", tiles: [resolvedSource], tileSize: 256 });
           mapInstance.addLayer({ id: lyr.id + "-raster", type: "raster", source: srcId, paint: { "raster-opacity": 0.8 } });

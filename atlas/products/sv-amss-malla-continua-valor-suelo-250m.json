@@ -1,0 +1,104 @@
+{
+  "schema_version": "1.0.0",
+  "id": "sv-amss-malla-continua-valor-suelo-250m",
+  "project_id": "sv-amss",
+  "title": "Malla continua metropolitana de valor estimado del suelo a 250 m en el AMSS (24,292 celdas · Embeddings V1 + EO)",
+  "summary": "Teselación regular continua de 24,292 celdas cuadradas de 250 × 250 m (6.25 ha; 148,875.1 ha totales en 28 distritos del AMSS ampliado, 0 vacíos) con estimación de valor medio, mediano, dispersión intra-celda, régimen morfológico (Urbano Consolidado, Periurbano en Transición, Rural/Reserva), altura edificada 2.5D y pendiente media.",
+  "product_type": "datos",
+  "publication_status": "publicado",
+  "coverage": {
+    "label": "Área Metropolitana de San Salvador Ampliada (AMSS · 24,292 celdas continuas de 250 m en 28 distritos)",
+    "geometry_url": "https://copernicuscentroamerica.github.io/urbano-sv-amss/geovisor/capas/amss_malla_continua_250m.geojson",
+    "spatial_resolution": "250 m × 250 m (6.25 ha por celda · agregada desde píxel de 20 m)",
+    "scale_denominator": 15000
+  },
+  "temporal": {
+    "start": "2023-01-01",
+    "end": "2025-12-31",
+    "reference_date": "2024-12-31"
+  },
+  "indicator": {
+    "name": "Valor estimado del suelo en malla continua de 250 m (VAL_EST_M2, VAL_MED_M2 y TIPO_SUELO)",
+    "unit": "USD/m²",
+    "definition": "Media, mediana y desviación estándar zonal en cada celda de 250 m calculadas sobre la superficie de valor del suelo a 20 m. Registra una media metropolitana de $50.04 USD/m² (mediana $32.47, P90 $93.83, máximo $375.90 USD/m²), diferenciando 2,215 celdas urbanas consolidadas (media $187.27/m²), 1,571 periurbanas en transición (media $74.35/m²) y 20,506 rurales o de reserva ambiental (media $33.35/m²).",
+    "aggregation": "Malla continua de 24,292 polígonos (EPSG:4326) enriquecida con distrito y municipio"
+  },
+  "data_sources": [
+    {
+      "title": "Google Satellite Embeddings V1 Annual (64 dimensiones latentes a 10 m)",
+      "provider": "Google Earth Engine",
+      "url": "https://developers.google.com/earth-engine/datasets",
+      "access": "abierto",
+      "description": "Embeddings fundacionales anuales 2024; 58 de las 64 bandas presentan correlación estadísticamente significativa (p < 0.05) con el log-precio del suelo en el AMSS (destacando A13 con r = -0.694, A32 con r = -0.660 y A34 con r = +0.650).",
+      "status": "declarado"
+    },
+    {
+      "title": "Covariables físicas de observación de la Tierra (Copernicus DEM GLO-30, ESA WorldCover 10 m, Open Buildings 2.5D y VIIRS DNB)",
+      "provider": "Programa Copernicus / ESA / Google Research / NOAA",
+      "url": "https://dataspace.copernicus.eu/",
+      "access": "abierto",
+      "description": "Siete predictores biofísicos y morfológicos explícitos (fracción edificada r = +0.621, cobertura arbórea r = -0.625, radiancia nocturna VIIRS r = +0.578, altura constructiva 2.5D, agua permanente, elevación y pendiente).",
+      "status": "declarado"
+    },
+    {
+      "title": "Muestra de calibración por UPD (Oferta 2025 + Permisos OPAMSS 2020–2026 y 2007–2019)",
+      "provider": "Oficina de Planificación del Área Metropolitana de San Salvador (OPAMSS)",
+      "url": "https://copernicuscentroamerica.github.io/urbano-sv-amss/geovisor/capas/upd_consolidado.geojson",
+      "access": "institucional",
+      "description": "Etiquetas de referencia en USD/m² armonizadas sobre las huellas construidas de 281 UPDs del AMSS.",
+      "status": "declarado"
+    }
+  ],
+  "method": {
+    "description": "Generación en Google Earth Engine mediante coveringGrid en proyección métrica EPSG:32616 (celdas exactas de 250 × 250 m recortadas al perímetro oficial del AMSS y reproyectadas a EPSG:4326) y reducción zonal multivariada en una sola pasada (arquitectura Halo = 0 con tileScale = 4) sobre el ráster de predicción Random Forest a 20 m.",
+    "version": "1.0.0-gee-2026",
+    "code_url": "https://copernicuscentroamerica.github.io/urbano-sv-amss/assets/descargas/gee_modelo_valor_suelo_amss.js"
+  },
+  "limitations": [
+    "En celdas de borde topográfico (barrancos colindantes con urbanizaciones de alto valor) la desviación estándar intra-celda (VAL_STD_M2) es elevada; se recomienda emplear la mediana intra-celda (VAL_MED_M2) para análisis de valor representativo.",
+    "El modelo refleja atributos morfológicos y de entorno captados desde satélite y luces nocturnas; la incorporación explícita de zonificación normativa e isócronas viales corresponde a la Fase II de refinamiento."
+  ],
+  "validation": {
+    "state": "en_revision",
+    "evidence_url": "https://copernicuscentroamerica.github.io/urbano-sv-amss/modelo-suelo/",
+    "date": "2026-11-12",
+    "reviewer": "Equipo técnico PMV sv-amss (pendiente de dictamen formal institucional)"
+  },
+  "outputs": {
+    "viewer_url": "https://copernicuscentroamerica.github.io/urbano-sv-amss/aplicacion/",
+    "download_url": "https://copernicuscentroamerica.github.io/urbano-sv-amss/geovisor/capas/amss_malla_continua_250m.geojson",
+    "documentation_url": "https://copernicuscentroamerica.github.io/urbano-sv-amss/modelo-suelo/",
+    "thumbnail_url": "https://copernicuscentroamerica.github.io/urbano-sv-amss/assets/img/figuras/04_mapa_resultados_malla_continua_250m.png"
+  },
+  "license": {
+    "name": "Uso técnico y académico con atribución institucional (OPAMSS / Programa Copernicus LAC)",
+    "url": "https://github.com/copernicuscentroamerica/urbano-sv-amss",
+    "reuse_note": "Malla vectorial continua libre de información nominal o catastral sensible; apta para estudios de planificación metropolitana e instrumentos de suelo."
+  },
+  "governance": {
+    "institution": "Oficina de Planificación del Área Metropolitana de San Salvador (OPAMSS)",
+    "maintainer": "Equipo Técnico SIG e Inteligencia Territorial — Iniciativa sv-amss",
+    "update_frequency": "Anual",
+    "content_updated_at": "2026-11-12"
+  },
+  "provenance": {
+    "sources": [
+      {
+        "id": "GEE02",
+        "label": "Malla continua exportada desde Google Earth Engine e integrada en geovisor/capas/amss_malla_continua_250m.geojson",
+        "locator": "src/integrar_resultados_gee_geovisor.py",
+        "url": "https://copernicuscentroamerica.github.io/urbano-sv-amss/geovisor/capas/amss_malla_continua_250m.geojson"
+      }
+    ],
+    "statements": [
+      {
+        "pointer": "",
+        "status": "declarado",
+        "source_ids": [
+          "GEE02"
+        ],
+        "note": "Producto geoespacial continuo de 24,292 celdas generado, validado geométricamente en EPSG:4326 y publicado en el repositorio oficial."
+      }
+    ]
+  }
+}

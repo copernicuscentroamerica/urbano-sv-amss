@@ -1,0 +1,96 @@
+{
+  "schema_version": "1.0.0",
+  "id": "sv-amss-superficie-pixel-20m-valor-suelo",
+  "project_id": "sv-amss",
+  "title": "Superficie continua a nivel de píxel (20 m) de valor estimado del suelo en el AMSS (GeoTIFF COG + Matriz de 71 Predictores)",
+  "summary": "Ráster continuo multibanda a 20 m de resolución espacial (3.85 millones de píxeles válidos; 3.63 millones en suelo urbano y desarrollable con pendiente < 35° libre de cuerpos de agua) con estimación de valor del suelo entre $8.66 y $471.13 USD/m², acompañado de la matriz empírica de correlaciones de las 71 bandas predictoras.",
+  "product_type": "mapa",
+  "publication_status": "publicado",
+  "coverage": {
+    "label": "Área Metropolitana de San Salvador Ampliada (AMSS · Envolvente WGS84 [-89.629, 13.418, -89.025, 13.920])",
+    "geometry_url": "https://copernicuscentroamerica.github.io/urbano-sv-amss/geovisor/capas/perimetro_zona_estudio.geojson",
+    "spatial_resolution": "20 m × 20 m por píxel (GeoTIFF COG comprimido con DEFLATE + vistas PNG georreferenciadas)",
+    "scale_denominator": 10000
+  },
+  "temporal": {
+    "start": "2024-01-01",
+    "end": "2024-12-31",
+    "reference_date": "2024-12-31"
+  },
+  "indicator": {
+    "name": "Superficie continua de valor estimado del suelo a nivel de píxel de 20 m",
+    "unit": "USD/m²",
+    "definition": "Predicción exponencial libre de sesgo por retransformación sobre un apilamiento de 71 bandas satelitales a 20 m: banda 1 para suelo urbano y desarrollable (pendiente < 35° sin lámina de agua; mediana $32.34, P90 $100.22, P95 $176.17, P99 $317.72 USD/m²) y banda 2 de potencial continuo completo en todo el perímetro metropolitano.",
+    "aggregation": "Píxel continuo de 20 m (3,845,824 píxeles válidos)"
+  },
+  "data_sources": [
+    {
+      "title": "Google Satellite Embeddings V1 Annual (A00–A63)",
+      "provider": "Google Earth Engine",
+      "url": "https://developers.google.com/earth-engine/datasets",
+      "access": "abierto",
+      "description": "64 bandas de representación profunda anual 2024 a 10 m remuestreadas a 20 m sin operadores de vecindad para garantizar ejecución libre de errores de memoria en GEE.",
+      "status": "declarado"
+    },
+    {
+      "title": "Copernicus DEM GLO-30, ESA WorldCover 10 m, Open Buildings 2.5D y VIIRS DNB",
+      "provider": "Programa Copernicus / ESA / Google Research / NOAA",
+      "url": "https://dataspace.copernicus.eu/",
+      "access": "abierto",
+      "description": "Capas físicas empleadas tanto en la inferencia del modelo como en la máscara topográfica e hidrológica de aptitud constructiva (pendiente < 35° y exclusión de agua permanente).",
+      "status": "declarado"
+    }
+  ],
+  "method": {
+    "description": "Inferencia píxel a píxel (Halo = 0) en Google Earth Engine mediante Random Forest de 200 árboles en espacio logarítmico, exportada como Cloud-Optimized GeoTIFF (COG DEFLATE de 2 bandas en Float32) y renderizada en rampa perceptualmente graduada YlOrRd-Granate para consulta directa en el Atlas Temático y en el Geovisor GeoLibre.",
+    "version": "1.0.0-gee-2026",
+    "code_url": "https://copernicuscentroamerica.github.io/urbano-sv-amss/assets/descargas/gee_modelo_valor_suelo_amss.js"
+  },
+  "limitations": [
+    "La banda de potencial continuo completo evalúa todo el relieve volcánico y rural con fines analíticos; para planificación urbana y edificabilidad debe priorizarse la banda enmascarada de suelo urbano/desarrollable (pendiente < 35° sin cuerpos de agua).",
+    "Resolución de trabajo fijada en 20 m para equilibrar fidelidad espacial intraurbana y estabilidad computacional en todo el ámbito metropolitano de 1,488.8 km²."
+  ],
+  "validation": {
+    "state": "en_revision",
+    "evidence_url": "https://copernicuscentroamerica.github.io/urbano-sv-amss/assets/descargas/amss_correlaciones_embeddings_suelo.csv",
+    "date": "2026-11-12",
+    "reviewer": "Equipo técnico PMV sv-amss (pendiente de dictamen formal institucional)"
+  },
+  "outputs": {
+    "viewer_url": "https://copernicuscentroamerica.github.io/urbano-sv-amss/resultados/#atlas-copernicus-zona",
+    "download_url": "https://copernicuscentroamerica.github.io/urbano-sv-amss/geovisor/capas/amss_valor_suelo_pixel_20m.tif",
+    "documentation_url": "https://copernicuscentroamerica.github.io/urbano-sv-amss/assets/descargas/Metodologia_Modelo_Valor_Suelo_AMSS_GEE.docx",
+    "thumbnail_url": "https://copernicuscentroamerica.github.io/urbano-sv-amss/assets/img/modelo/amss_pixel_20m_urbano.png"
+  },
+  "license": {
+    "name": "Uso técnico y académico con atribución institucional (OPAMSS / Programa Copernicus LAC)",
+    "url": "https://github.com/copernicuscentroamerica/urbano-sv-amss",
+    "reuse_note": "Ráster derivado de fuentes satelitales abiertas y calibración agregada; libre reutilización citando la fuente técnica."
+  },
+  "governance": {
+    "institution": "Oficina de Planificación del Área Metropolitana de San Salvador (OPAMSS)",
+    "maintainer": "Equipo Técnico SIG e Inteligencia Territorial — Iniciativa sv-amss",
+    "update_frequency": "Anual",
+    "content_updated_at": "2026-11-12"
+  },
+  "provenance": {
+    "sources": [
+      {
+        "id": "GEE03",
+        "label": "Ráster GeoTIFF COG a 20 m y matriz de correlaciones exportados desde Google Earth Engine",
+        "locator": "geovisor/capas/amss_valor_suelo_pixel_20m.tif",
+        "url": "https://copernicuscentroamerica.github.io/urbano-sv-amss/geovisor/capas/amss_valor_suelo_pixel_20m.tif"
+      }
+    ],
+    "statements": [
+      {
+        "pointer": "",
+        "status": "declarado",
+        "source_ids": [
+          "GEE03"
+        ],
+        "note": "Superficie ráster continua a 20 m y matriz de 71 predictores generadas y publicadas en el repositorio oficial."
+      }
+    ]
+  }
+}

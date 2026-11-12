@@ -165,7 +165,7 @@ def render_shell(
         )
         maplibre_scripts = (
             '<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js" crossorigin="anonymous"></script>\n'
-            f'  <script src="{html.escape(ctx.site_url("assets/js/geovisor.js"), quote=True)}?v=2.1.0"></script>'
+            f'  <script src="{html.escape(ctx.site_url("assets/js/geovisor.js"), quote=True)}?v=2.2.2"></script>'
         )
 
     updated_raw = manifest["governance"].get("content_updated_at")
@@ -179,10 +179,10 @@ def render_shell(
   <title>{esc(page_title)} · {esc(short_title)}</title>
   <meta name="description" content="{esc(manifest['summary'])}">
   {robots_meta}
-  <link rel="stylesheet" href="{html.escape(ctx.site_url('assets/css/styles.css'), quote=True)}?v=2.1.0">
+  <link rel="stylesheet" href="{html.escape(ctx.site_url('assets/css/styles.css'), quote=True)}?v=2.2.2">
   {maplibre_head}
 </head>
-<body>
+<body data-baseurl="{html.escape(ctx.site_url(''), quote=True)}">
   <a class="skip-link" href="#contenido-principal">Saltar al contenido principal</a>
   {work_banner_html}
   {upper_bar_html}
@@ -240,7 +240,7 @@ def render_shell(
     </div>
   </footer>
 
-  <script src="{html.escape(ctx.site_url('assets/js/ui.js'), quote=True)}?v=2.1.0"></script>
+  <script src="{html.escape(ctx.site_url('assets/js/ui.js'), quote=True)}?v=2.2.0"></script>
   {maplibre_scripts}
 </body>
 </html>
@@ -2418,14 +2418,70 @@ def render_copernicus_study_area_atlas_section(
                 ("#D9DFEA", "Relieve base emergido", "Terreno sin lámina de agua detectada a escala satelital."),
             ],
         ),
+        (
+            "gee-pixel-suelo-20m",
+            "Lámina 11",
+            "💰 11. Valor del Suelo Píxel 20 m (Modelo GEE)",
+            "Superficie Continua a Nivel de Píxel (20 m) — Valor Estimado del Suelo AMSS (Google Satellite Embeddings V1 + EO)",
+            "Predicción continua a 20 m (3.85 M píxeles; rango $8.66 a $471.13 USD/m²) obtenida con Random Forest (200 árboles) sobre 64 bandas de Google Satellite Embeddings V1 y 7 capas físicas Copernicus.",
+            [
+                ("gee-pixel-20m-urbano", "Píxel 20 m · Urbano y Desarrollable"),
+                ("gee-pixel-20m-potencial", "Píxel 20 m · Potencial Completo"),
+            ],
+            [
+                ("#67001F", "> $420 USD/m² (Granate prime)", "Nodos corporativos de máxima capitalización (máx. $471.13/m²)."),
+                ("#B30000", "$300 – $420 USD/m²", "Ejes comerciales primarios y desarrollos verticales consolidados."),
+                ("#E34A33", "$175 – $300 USD/m²", "Tejido residencial medio-alto en San Salvador, Antiguo Cuscatlán y Santa Tecla."),
+                ("#FC8D59", "$100 – $175 USD/m²", "Tejido urbano medio y parques logísticos-industriales."),
+                ("#FDBB84", "$50 – $100 USD/m²", "Frentes de expansión periurbana activa sobre corredores metropolitanos."),
+                ("#FDD49E", "$30 – $50 USD/m²", "Borde rururbano de baja densidad en piedemonte."),
+                ("#FEF0D9", "≤ $30 USD/m²", "Suelos rurales, cafetales y reservas volcánicas."),
+            ],
+        ),
+        (
+            "gee-malla-upds-suelo",
+            "Lámina 12",
+            "🗺️ 12. Malla 250 m y 425 UPDs (Resultados GEE)",
+            "Malla Continua Metropolitana (24,292 Celdas de 250 m) e Imputación de las 425 UPDs sin Vacíos",
+            "Integra la malla continua de 24,292 celdas (media $50.04/m², mediana $32.47/m², máx. $375.90/m²) y el cierre del 100% de vacíos en las 425 UPDs (281 observadas + 144 imputadas por GEE, r = 0.7816). Haz clic en cualquier polígono del mapa.",
+            [
+                ("gee-malla-250m-homol", "Malla 250 m · Valor USD/m²"),
+                ("gee-malla-250m-tipologia", "Malla 250 m · Régimen Urbano/Rural"),
+                ("gee-malla-250m-quintiles", "Malla 250 m · Quintiles P20–P80"),
+                ("gee-upd-425-fin", "425 UPDs · Valor Integrado (0 Vacíos)"),
+                ("gee-upd-425-origen", "425 UPDs · Observado vs. Imputado"),
+                ("lisa-mercado-2025", "Clusters LISA · Oferta 2025"),
+            ],
+            [
+                ("#990000", "Nodos Prime (> $300/m² · 241 celdas)", "Subcentros corporativos y residenciales de máxima renta."),
+                ("#E34A33", "Urbano Alto ($175–$300/m² · 836 celdas)", "Tejido urbano consolidado de alta valorización."),
+                ("#FC8D59", "Urbano Medio ($100–$175/m² · 1,218 celdas)", "Zonas residenciales e industriales consolidadas."),
+                ("#FDBB84", "Transición ($50–$100/m² · 2,215 celdas)", "Corredores periurbanos en densificación."),
+                ("#FDD49E", "Periurbano Bajo ($30–$50/m² · 11,225 celdas)", "Piedemonte y transición agrourbana."),
+                ("#FEF0D9", "Reserva / Rural (≤ $30/m² · 8,557 celdas)", "Matriz rural, forestal y relieve volcánico."),
+            ],
+        ),
     ]
 
+    default_plate_key = "gee-malla-upds-suelo" if pid == "sv-amss" else "sentinel2-cloudless"
+    gee_pdf_href = html.escape(
+        ctx.site_url("assets/descargas/Atlas_Resultados_Modelo_Suelo_GEE_AMSS.pdf")
+        if ctx
+        else "../assets/descargas/Atlas_Resultados_Modelo_Suelo_GEE_AMSS.pdf",
+        quote=True,
+    )
+    modelo_href = html.escape(ctx.site_url("modelo-suelo/") if ctx else "../modelo-suelo/", quote=True)
+    geovisor_href = html.escape(ctx.site_url("aplicacion/") if ctx else "../aplicacion/", quote=True)
+
     tabs_html = []
-    cards_html = []
-    for idx, (pk, pnum, pshort, ptitle, preading, pvariants, pswatches) in enumerate(plates_meta):
-        active_cls = " is-active" if idx == 0 else ""
+    gee_cards_html = []
+    eo_cards_html = []
+    for pk, pnum, pshort, ptitle, preading, pvariants, pswatches in plates_meta:
+        is_gee = pk in ("gee-pixel-suelo-20m", "gee-malla-upds-suelo")
+        active_cls = " is-active" if pk == default_plate_key else ""
+        tab_style = ' style="border-color:#F59E0B;font-weight:800;"' if is_gee else ""
         tabs_html.append(
-            f'<button type="button" class="atlas-plate-tab{active_cls}" data-atlas-plate="{esc(pk)}">{esc(pshort)}</button>'
+            f'<button type="button" class="atlas-plate-tab{active_cls}"{tab_style} data-atlas-plate="{esc(pk)}">{esc(pshort)}</button>'
         )
         var_pills = "".join(
             f'<button type="button" class="atlas-variant-pill" data-atlas-plate-select="{esc(pk)}" data-atlas-variant-select="{esc(vk)}">{esc(vlbl)}</button>'
@@ -2439,50 +2495,91 @@ def render_copernicus_study_area_atlas_section(
             f"</li>"
             for c, lbl, d in pswatches
         )
-        cards_html.append(
-            f"""
-            <article class="card" style="border-top:3px solid var(--c-brand-blue);display:flex;flex-direction:column;justify-content:space-between;">
+        border_col = "#D97706" if is_gee else "var(--c-brand-blue)"
+        card_bg = "background:linear-gradient(180deg,#FFFBEB 0%,#FFFFFF 26%);" if is_gee else ""
+        badge_extra = '<span class="badge badge-ok">Nuevo · Resultado Modelo GEE</span>' if is_gee else ""
+        card_markup = f"""
+            <article class="card" style="border-top:4px solid {border_col};{card_bg}display:flex;flex-direction:column;justify-content:space-between;">
               <div>
-                <div style="display:flex;justify-content:space-between;align-items:center;gap:0.4rem;margin-bottom:0.4rem;">
-                  <span class="badge badge-lime">{esc(pnum)} · {len(pvariants)} capas/años</span>
+                <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:0.4rem;margin-bottom:0.4rem;">
+                  <div style="display:flex;flex-wrap:wrap;gap:0.35rem;align-items:center;">
+                    <span class="badge badge-lime">{esc(pnum)} · {len(pvariants)} capas/modos</span>
+                    {badge_extra}
+                  </div>
                   <button type="button" class="btn btn-teal btn-xs" data-atlas-plate-select="{esc(pk)}">Ver lámina en el mapa ↑</button>
                 </div>
                 <h3 style="margin:0.2rem 0 0.4rem;font-size:1.02rem;color:var(--c-brand-blue);">{esc(ptitle)}</h3>
                 <p style="font-size:0.86rem;color:var(--c-text-muted);margin-bottom:0.55rem;">{esc(preading)}</p>
                 <div class="atlas-variant-box" style="margin-bottom:0.65rem;">
-                  <div class="atlas-variant-box-label"><span>📅 Años / Capas disponibles (clic para cargar en el mapa):</span></div>
+                  <div class="atlas-variant-box-label"><span>🎛️ Capas / Años disponibles (clic para cargar en el mapa):</span></div>
                   <div class="atlas-variant-pills">{var_pills}</div>
                 </div>
                 <ul class="atlas-swatch-list">{sw_rows}</ul>
               </div>
             </article>
             """
-        )
+        if is_gee:
+            gee_cards_html.append(card_markup)
+        else:
+            eo_cards_html.append(card_markup)
+
+    cards_html = gee_cards_html + eo_cards_html
+
+    gee_quickbar_html = ""
+    if pid == "sv-amss":
+        gee_quickbar_html = f"""
+        <div class="card" style="margin-bottom:0.9rem;border-left:5px solid #D97706;background:linear-gradient(90deg,#FFFBEB 0%,#F8FAFC 100%);padding:0.85rem 1rem;">
+          <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:0.6rem;margin-bottom:0.55rem;">
+            <div>
+              <span class="badge badge-ok">✨ Nuevas Láminas Integradas · Resultados Obtenidos GEE</span>
+              <strong style="margin-left:0.4rem;color:var(--c-brand-blue);font-size:0.95rem;">Acceso directo en el Atlas a los productos del Modelo de Valor del Suelo (Embeddings V1 + Copernicus):</strong>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:0.4rem;">
+              <a class="btn btn-primary btn-xs" href="{modelo_href}">📖 Metodología, Análisis y Script GEE →</a>
+              <a class="btn btn-teal btn-xs" href="{geovisor_href}">🧭 Abrir Geovisor Multicapa →</a>
+              <a class="btn btn-outline btn-xs" href="{gee_pdf_href}" download="Atlas_Resultados_Modelo_Suelo_GEE_AMSS.pdf">📥 Láminas GEE (PDF · 3 Págs.)</a>
+            </div>
+          </div>
+          <div class="atlas-variant-pills" role="group" aria-label="Selector directo de capas de resultados obtenidos en el Atlas">
+            <button type="button" class="atlas-variant-pill" data-atlas-plate-select="gee-malla-upds-suelo" data-atlas-variant-select="gee-malla-250m-homol">🗺️ Malla Continua 250 m · Valor USD/m² (24,292 celdas)</button>
+            <button type="button" class="atlas-variant-pill" data-atlas-plate-select="gee-malla-upds-suelo" data-atlas-variant-select="gee-malla-250m-tipologia">🏘️ Malla 250 m · Régimen Urbano / Periurbano / Rural</button>
+            <button type="button" class="atlas-variant-pill" data-atlas-plate-select="gee-malla-upds-suelo" data-atlas-variant-select="gee-malla-250m-quintiles">📊 Malla 250 m · Quintiles P20–P80</button>
+            <button type="button" class="atlas-variant-pill" data-atlas-plate-select="gee-pixel-suelo-20m" data-atlas-variant-select="gee-pixel-20m-urbano">💰 Superficie Píxel 20 m · Suelo Urbano y Desarrollable</button>
+            <button type="button" class="atlas-variant-pill" data-atlas-plate-select="gee-pixel-suelo-20m" data-atlas-variant-select="gee-pixel-20m-potencial">🌋 Superficie Píxel 20 m · Potencial Continuo Completo</button>
+            <button type="button" class="atlas-variant-pill" data-atlas-plate-select="gee-malla-upds-suelo" data-atlas-variant-select="gee-upd-425-fin">🧩 425 UPDs Completas · Valor Integrado (0 Vacíos)</button>
+            <button type="button" class="atlas-variant-pill" data-atlas-plate-select="gee-malla-upds-suelo" data-atlas-variant-select="gee-upd-425-origen">🛰️ 425 UPDs · Observadas (281) vs. Imputadas GEE (144)</button>
+            <button type="button" class="atlas-variant-pill" data-atlas-plate-select="gee-malla-upds-suelo" data-atlas-variant-select="lisa-mercado-2025">🔥 Clusters LISA · Oferta 2025</button>
+          </div>
+        </div>
+        """
 
     return f"""
     <section class="section" id="atlas-copernicus-zona" aria-labelledby="titulo-atlas-copernicus">
       <div class="section-header" style="margin-bottom:0.75rem;">
         <div>
-          <span class="badge badge-lime">Cartografía Temática Enmascarada · 10 Láminas y Series Anuales Completas</span>
-          <h2 id="titulo-atlas-copernicus" style="margin:0.3rem 0 0.2rem;">Atlas Temático Copernicus de la Zona de Estudio ({esc(territory_label)})</h2>
-          <p style="margin:0;color:var(--c-text-muted);font-size:0.93rem;">Explora las <strong>10 láminas temáticas y todas las series multitemporales anuales (Mosaicos Sentinel-2 2018–2024, DEM GLO-30 en 3 modos, ESA WorldCover 2020–2021, Uso del Suelo LULC 2017–2023, Índices NDVI/NDBI/NDWI, Infrarrojo/SWIR, Radar Sentinel-1 y Agua JRC)</strong> recortadas visualmente con el perímetro de <strong>{esc(territory_label)}</strong>.</p>
+          <span class="badge badge-lime">Cartografía Temática Enmascarada · 12 Láminas Interactivas (Observación Copernicus + Resultados Modelo Valor del Suelo GEE)</span>
+          <h2 id="titulo-atlas-copernicus" style="margin:0.3rem 0 0.2rem;">Atlas Temático Copernicus y Resultados de Valor del Suelo ({esc(territory_label)})</h2>
+          <p style="margin:0;color:var(--c-text-muted);font-size:0.93rem;">Explora de forma interactiva los <strong>resultados obtenidos del Modelo Espacial de Valor del Suelo en Google Earth Engine (Lámina 11: Superficie Píxel 20 m; Lámina 12: Malla Continua de 24,292 celdas, 425 UPDs sin vacíos y Clusters LISA)</strong> junto con las <strong>10 láminas satelitales multitemporales Copernicus (2017–2024)</strong> recortadas con el perímetro oficial del AMSS.</p>
         </div>
       </div>
 
       <div class="atlas-pdf-banner" role="region" aria-label="Descarga del Atlas Institucional en PDF">
         <div class="atlas-pdf-banner-inner">
           <div class="atlas-pdf-banner-text">
-            <span class="atlas-pdf-banner-eyebrow">📘 Edición Editorial A4 Horizontal · Identidad Institucional 2.0.0-copernicus-2026</span>
-            <h3 class="atlas-pdf-banner-title">Documento Oficial del Atlas Temático Copernicus para Descargar en PDF ({esc(territory_label)})</h3>
-            <p class="atlas-pdf-banner-desc">Incluye portada institucional con trama cartográfica y logos oficiales, ficha técnica e índice, las <strong>10 láminas temáticas principales</strong> y las <strong>páginas de series multitemporales completas con todos los años y modos (2017–2024)</strong> recortadas con el límite de <strong>{esc(territory_label)}</strong> y sus leyendas cromáticas hexadecimales.</p>
+            <span class="atlas-pdf-banner-eyebrow">📘 Edición Editorial Actualizada A4 Horizontal · Identidad Institucional 2.0.0-copernicus-2026</span>
+            <h3 class="atlas-pdf-banner-title">Atlas Oficial Copernicus + Anexo de Resultados del Modelo de Valor del Suelo GEE ({esc(territory_label)})</h3>
+            <p class="atlas-pdf-banner-desc">Actualizado a <strong>25 páginas en formato A4 horizontal</strong>: integra las 10 láminas satelitales base y series anuales (2017–2024) más las <strong>3 nuevas láminas institucionales de resultados obtenidos (Superficie Píxel 20 m, Malla Continua 250 m de 24,292 celdas, e Imputación de las 425 UPDs + Correlaciones de Google Satellite Embeddings V1)</strong>.</p>
           </div>
           <div class="atlas-pdf-banner-actions">
-            <a class="btn btn-primary" href="{pdf_href}" download="{esc(pdf_dl_name)}">📥 Descargar Atlas Institucional Completo (PDF · 22 Págs. · 60 capas)</a>
-            <button type="button" class="btn btn-teal" data-atlas-export-pdf>🖨️ Exportar lámina / año actual a PDF</button>
+            <a class="btn btn-primary" href="{pdf_href}" download="{esc(pdf_dl_name)}">📥 Descargar Atlas Institucional Completo Actualizado (PDF · 25 Págs.)</a>
+            <a class="btn btn-teal" href="{gee_pdf_href}" download="Atlas_Resultados_Modelo_Suelo_GEE_AMSS.pdf">📥 Descargar Solo Láminas Resultados GEE (PDF · 3 Págs.)</a>
+            <button type="button" class="btn btn-outline-light btn-xs" data-atlas-export-pdf>🖨️ Exportar lámina activa del mapa a PDF</button>
             <a class="btn btn-outline-light btn-xs" href="{pdf_href}" target="_blank" rel="noopener noreferrer">Abrir PDF en pestaña ↗</a>
           </div>
         </div>
       </div>
+
+      {gee_quickbar_html}
 
       <div class="atlas-plate-tabs" role="tablist" aria-label="Láminas temáticas del Atlas Copernicus">
         {"".join(tabs_html)}
@@ -2492,7 +2589,7 @@ def render_copernicus_study_area_atlas_section(
         <div class="atlas-copernicus-map-col">
           <div class="geovisor-toolbar" style="border-radius:0;">
             <div style="display:flex;flex-wrap:wrap;align-items:center;gap:0.5rem;">
-              <strong id="atlas-toolbar-plate-label" style="font-size:0.82rem;color:var(--c-accent-yellow);">🛰️ 1. Mosaicos Anuales Sentinel-2 (2018–2024)</strong>
+              <strong id="atlas-toolbar-plate-label" style="font-size:0.82rem;color:var(--c-accent-yellow);">🗺️ 12. Malla 250 m y 425 UPDs (Resultados GEE)</strong>
               <label style="display:inline-flex;align-items:center;gap:0.3rem;font-size:0.76rem;color:#FFFFFF;">
                 <span>Año / Capa:</span>
                 <select id="atlas-toolbar-variant-select" class="atlas-toolbar-select" aria-label="Seleccionar año o variante de la lámina en la barra del mapa"></select>
@@ -2508,27 +2605,27 @@ def render_copernicus_study_area_atlas_section(
               </label>
             </div>
             <div class="geovisor-toolbar-actions">
-              <a class="btn btn-primary btn-xs" href="{pdf_href}" download="{esc(pdf_dl_name)}" title="Descargar el Atlas completo (10 láminas + series multitemporales) en PDF">📥 Descargar Atlas PDF</a>
-              <button type="button" class="btn btn-outline-light btn-xs" data-atlas-export-pdf title="Exportar la lámina y año actuales en formato A4 Horizontal institucional">🖨️ Lámina a PDF</button>
+              <a class="btn btn-primary btn-xs" href="{pdf_href}" download="{esc(pdf_dl_name)}" title="Descargar el Atlas completo actualizado (25 páginas) en PDF">📥 Descargar Atlas PDF</a>
+              <button type="button" class="btn btn-outline-light btn-xs" data-atlas-export-pdf title="Exportar la lámina y variante actuales en formato A4 Horizontal institucional">🖨️ Lámina a PDF</button>
               <button type="button" id="atlas-fit-bounds" class="btn btn-outline-light btn-xs">Encuadrar límite</button>
               <button type="button" id="atlas-toggle-fullscreen" class="btn btn-outline-light btn-xs">⛶ Pantalla completa</button>
             </div>
           </div>
           <div class="atlas-map-stage">
             <div id="atlas-map-year-badge" class="atlas-map-year-badge" aria-live="polite">
-              <span id="atlas-map-year-top" class="atlas-map-year-badge-top">SERIE MULTITEMPORAL (7/7)</span>
-              <span id="atlas-map-year-main" class="atlas-map-year-badge-main">2024</span>
+              <span id="atlas-map-year-top" class="atlas-map-year-badge-top">LÁMINA 12</span>
+              <span id="atlas-map-year-main" class="atlas-map-year-badge-main">Malla 250 m · Valor USD/m²</span>
             </div>
-            <div id="atlas-copernicus-map" class="atlas-copernicus-canvas" data-center="{center_attr}" data-zoom="{initial_zoom}" role="region" aria-label="Mapa del Atlas Temático Copernicus enmascarado con la zona de estudio"></div>
+            <div id="atlas-copernicus-map" class="atlas-copernicus-canvas" data-center="{center_attr}" data-zoom="{initial_zoom}" data-default-plate="{esc(default_plate_key)}" role="region" aria-label="Mapa del Atlas Temático Copernicus enmascarado con la zona de estudio"></div>
           </div>
         </div>
 
         <div class="atlas-copernicus-info-col" id="atlas-plate-detail">
           <div>
-            <span id="atlas-plate-badge" class="badge badge-lime">Lámina 1 · 2024</span>
-            <h3 id="atlas-plate-title" style="margin:0.35rem 0 0.25rem;font-size:1.1rem;color:var(--c-brand-blue);">Mosaico Anual sin Nubes Copernicus Sentinel-2 Cloudless · Año 2024 (10 m)</h3>
-            <p style="margin:0;font-size:0.8rem;color:var(--c-text-muted);"><strong>Sensor / Fuente:</strong> <span id="atlas-plate-sensor">Copernicus Sentinel-2 MSI · Mosaicos anuales sin nubes (10 m)</span></p>
-            <p style="margin:0.15rem 0 0;font-size:0.78rem;color:var(--c-text-muted);"><strong>Parámetro / Expresión:</strong> <code id="atlas-plate-formula">Compuesto anual óptico en Color Verdadero RGB (B04-B03-B02)</code></p>
+            <span id="atlas-plate-badge" class="badge badge-lime">Lámina 12 · Malla 250 m</span>
+            <h3 id="atlas-plate-title" style="margin:0.35rem 0 0.25rem;font-size:1.1rem;color:var(--c-brand-blue);">Malla Continua Metropolitana 250 m · Valor Estimado del Suelo (24,292 Celdas · 0 Vacíos)</h3>
+            <p style="margin:0;font-size:0.8rem;color:var(--c-text-muted);"><strong>Sensor / Fuente:</strong> <span id="atlas-plate-sensor">Google Earth Engine · Google Satellite Embeddings V1 + Copernicus EO + Registros OPAMSS / Oferta 2025</span></p>
+            <p style="margin:0.15rem 0 0;font-size:0.78rem;color:var(--c-text-muted);"><strong>Parámetro / Expresión:</strong> <code id="atlas-plate-formula">Reducción zonal media/mediana/DE desde píxel de 20 m sobre 24,292 celdas</code></p>
           </div>
 
           <div class="atlas-variant-box">
@@ -2555,7 +2652,7 @@ def render_copernicus_study_area_atlas_section(
 
           <div style="background:#F3F6FD;border-left:3px solid var(--c-brand-blue);padding:0.65rem 0.8rem;border-radius:4px;font-size:0.85rem;line-height:1.45;">
             <strong style="color:var(--c-brand-blue);display:block;margin-bottom:0.2rem;">Lectura e interpretación territorial en {esc(territory_label)}:</strong>
-            <span id="atlas-plate-reading">Permite inspeccionar visualmente la evolución física del territorio año por año entre 2018 y 2024.</span>
+            <span id="atlas-plate-reading">Haz clic sobre cualquier celda de 250 m o UPD en el mapa para inspeccionar su valor estimado, mediana, dispersión y morfología.</span>
           </div>
 
           <div>
@@ -2564,15 +2661,16 @@ def render_copernicus_study_area_atlas_section(
           </div>
 
           <div style="display:flex;flex-wrap:wrap;gap:0.45rem;padding-top:0.5rem;border-top:1px solid var(--c-border);">
-            <a class="btn btn-primary btn-xs" href="{pdf_href}" download="{esc(pdf_dl_name)}">📥 Descargar Atlas Completo (PDF)</a>
-            <button type="button" class="btn btn-teal btn-xs" data-atlas-export-pdf>🖨️ Exportar esta lámina y año a PDF</button>
+            <a class="btn btn-primary btn-xs" href="{pdf_href}" download="{esc(pdf_dl_name)}">📥 Atlas Completo (25 Págs.)</a>
+            <a class="btn btn-outline btn-xs" href="{gee_pdf_href}" download="Atlas_Resultados_Modelo_Suelo_GEE_AMSS.pdf">📥 Láminas GEE (3 Págs.)</a>
+            <button type="button" class="btn btn-teal btn-xs" data-atlas-export-pdf>🖨️ Exportar lámina activa a PDF</button>
           </div>
         </div>
       </div>
 
       <div style="margin-top:1.4rem;">
-        <h3 style="margin:0 0 0.4rem;color:var(--c-brand-blue);">Catálogo completo de las 10 Láminas, Selectores Anuales y Leyendas Cromáticas</h3>
-        <p style="margin:0 0 0.9rem;font-size:0.88rem;color:var(--c-text-muted);">Haz clic en cualquier <strong>año o modo</strong> dentro de las tarjetas inferiores (o en <strong>Ver lámina en el mapa ↑</strong>) para cargarlo directamente en el visor superior con el límite de la zona de estudio:</p>
+        <h3 style="margin:0 0 0.4rem;color:var(--c-brand-blue);">Catálogo Completo de las 12 Láminas del Atlas (Resultados Modelo GEE + Series Satelitales Copernicus)</h3>
+        <p style="margin:0 0 0.9rem;font-size:0.88rem;color:var(--c-text-muted);">Las primeras dos tarjetas destacan los <strong>resultados obtenidos del Modelo de Valor del Suelo (Láminas 12 y 11)</strong>, seguidas por las 10 láminas base de observación de la Tierra Copernicus. Haz clic en cualquier botón para cargarlo en el visor superior:</p>
         <div class="grid-2">
           {"".join(cards_html)}
         </div>
@@ -2592,44 +2690,145 @@ def build_resultados_page(
 ) -> str:
     outputs_li = "".join(f"<li>{esc(o)}</li>" for o in manifest.get("expected_outputs", [])) or "<li>Productos esperados por detallar.</li>"
 
+    local_product_routes: dict[str, dict[str, str]] = {
+        "sv-amss-malla-continua-valor-suelo-250m": {
+            "viewer": ctx.site_url("aplicacion/"),
+            "atlas_plate": "gee-malla-upds-suelo",
+            "atlas_var": "gee-malla-250m-homol",
+            "download": ctx.site_url("geovisor/capas/amss_malla_continua_250m.geojson"),
+            "dl_label": "📥 Descargar GeoJSON Malla 250 m (10.5 MB)",
+            "thumb": ctx.site_url("assets/img/figuras/04_mapa_resultados_malla_continua_250m.png"),
+        },
+        "sv-amss-superficie-pixel-20m-valor-suelo": {
+            "viewer": ctx.site_url("aplicacion/"),
+            "atlas_plate": "gee-pixel-suelo-20m",
+            "atlas_var": "gee-pixel-20m-urbano",
+            "download": ctx.site_url("geovisor/capas/amss_valor_suelo_pixel_20m.tif"),
+            "dl_label": "📥 Descargar GeoTIFF COG 20 m (27.6 MB)",
+            "thumb": ctx.site_url("assets/img/modelo/amss_pixel_20m_urbano.png"),
+        },
+        "sv-amss-expansion-y-valor-suelo": {
+            "viewer": ctx.site_url("aplicacion/"),
+            "atlas_plate": "gee-malla-upds-suelo",
+            "atlas_var": "gee-upd-425-fin",
+            "download": ctx.site_url("geovisor/capas/amss_upd_425_imputadas.geojson"),
+            "dl_label": "📥 Descargar GeoJSON 425 UPDs (3.0 MB)",
+            "thumb": ctx.site_url("assets/img/figuras/02_cobertura_territorial_upds_amss.png"),
+        },
+    }
+
+    modelo_url = html.escape(ctx.site_url("modelo-suelo/"), quote=True)
+    gv_url = html.escape(ctx.site_url("aplicacion/"), quote=True)
+    docx_url = html.escape(ctx.site_url("assets/descargas/Metodologia_Modelo_Valor_Suelo_AMSS_GEE.docx"), quote=True)
+    gee_js_url = html.escape(ctx.site_url("assets/descargas/gee_modelo_valor_suelo_amss.js"), quote=True)
+    corr_csv_url = html.escape(ctx.site_url("assets/descargas/amss_correlaciones_embeddings_suelo.csv"), quote=True)
+    gee_pdf_url = html.escape(ctx.site_url("assets/descargas/Atlas_Resultados_Modelo_Suelo_GEE_AMSS.pdf"), quote=True)
+
     atlas_cards = []
     for ap in atlas_products:
         ind = ap.get("indicator", {})
         cov = ap.get("coverage", {})
         outs = ap.get("outputs", {})
-        viewer_btn = render_link_or_pending(outs.get("viewer_url"), "Abrir visor del producto", "Visor del producto aún no publicado")
-        dl_btn = render_link_or_pending(outs.get("download_url"), "Descargar datos", "Descarga pendiente de publicación")
+        temp = ap.get("temporal", {})
+        meth = ap.get("method", {})
+        aid = ap.get("id", "")
+        lroute = local_product_routes.get(aid)
+
+        thumb_html = ""
+        if lroute and lroute.get("thumb"):
+            t_href = html.escape(lroute["thumb"], quote=True)
+            thumb_html = f"""
+            <div style="margin:0.65rem 0;border:1px solid var(--c-border);border-radius:8px;overflow:hidden;background:#070D24;max-height:240px;display:flex;align-items:center;justify-content:center;">
+              <img src="{t_href}" alt="Vista previa cartográfica de {esc(ap['title'])}" style="width:100%;max-height:240px;object-fit:contain;display:block;" loading="lazy">
+            </div>
+            """
+
+        if lroute:
+            footer_btns = f"""
+                <button type="button" class="btn btn-primary btn-xs" data-atlas-plate-select="{esc(lroute['atlas_plate'])}" data-atlas-variant-select="{esc(lroute['atlas_var'])}">🗺️ Cargar en el Atlas ↑</button>
+                <a class="btn btn-teal btn-xs" href="{html.escape(lroute['viewer'], quote=True)}">🧭 Abrir en Geovisor</a>
+                <a class="btn btn-outline btn-xs" href="{html.escape(lroute['download'], quote=True)}" download>{esc(lroute['dl_label'])}</a>
+                <a class="btn btn-outline btn-xs" href="{modelo_url}">📖 Metodología y Script GEE</a>
+            """
+        else:
+            viewer_btn = render_link_or_pending(outs.get("viewer_url"), "Abrir visor del producto", "Visor del producto aún no publicado")
+            dl_btn = render_link_or_pending(outs.get("download_url"), "Descargar datos", "Descarga pendiente de publicación")
+            footer_btns = f"{viewer_btn} {dl_btn}"
+
+        temp_label = " · ".join(
+            p for p in [
+                f"Periodo: {temp.get('start')} a {temp.get('end')}" if temp.get("start") and temp.get("end") else "",
+                f"Corte ref.: {temp.get('reference_date')}" if temp.get("reference_date") else "",
+            ] if p
+        ) or "Por confirmar"
+
         atlas_cards.append(
             f"""
-            <article class="card">
+            <article class="card" style="border-left:4px solid var(--c-brand-teal);margin-bottom:1rem;">
               <div style="display:flex;flex-wrap:wrap;gap:0.4rem;">
                 {badge_html(ap.get('publication_status'), 'Publicación')}
                 {badge_html(ap.get('validation', {}).get('state'), 'Validación')}
                 <span class="badge badge-country">Tipo: {esc(ap.get('product_type'))}</span>
+                <span class="badge badge-lime">Versión: {esc(meth.get('version'), '1.0.0')}</span>
               </div>
-              <h3>{esc(ap['title'])}</h3>
+              <h3 style="margin-top:0.45rem;">{esc(ap['title'])}</h3>
               <p>{esc(ap['summary'])}</p>
+              {thumb_html}
               <div class="table-wrap">
                 <table>
                   <tbody>
                     <tr><th>ID de producto Atlas</th><td><code>{esc(ap['id'])}</code></td></tr>
-                    <tr><th>Cobertura y resolución</th><td>{esc(cov.get('label'))} · Resolución: {esc(cov.get('spatial_resolution'), 'Por confirmar')}</td></tr>
-                    <tr><th>Indicador y unidad</th><td>{esc(ind.get('name'), 'Por definir')} ({esc(ind.get('unit'), 'unidad por definir')})</td></tr>
-                    <tr><th>Definición y agregación</th><td>{esc(ind.get('definition'), '—')} · Agregación: {esc(ind.get('aggregation'), '—')}</td></tr>
-                    <tr><th>Institución custodia</th><td>{esc(ap.get('governance', {}).get('institution'), 'Por confirmar')}</td></tr>
+                    <tr><th>Cobertura y resolución</th><td>{esc(cov.get('label'))} · Resolución: <strong>{esc(cov.get('spatial_resolution'), 'Por confirmar')}</strong></td></tr>
+                    <tr><th>Ventana temporal</th><td>{esc(temp_label)}</td></tr>
+                    <tr><th>Indicador y unidad</th><td><strong>{esc(ind.get('name'), 'Por definir')}</strong> ({esc(ind.get('unit'), 'unidad por definir')})</td></tr>
+                    <tr><th>Definición y métricas</th><td>{esc(ind.get('definition'), '—')} · Agregación: {esc(ind.get('aggregation'), '—')}</td></tr>
+                    <tr><th>Método reproducible</th><td>{esc(meth.get('description'), '—')}</td></tr>
+                    <tr><th>Institución custodia</th><td>{esc(ap.get('governance', {}).get('institution'), 'Por confirmar')} · Actualizado: {esc(ap.get('governance', {}).get('content_updated_at'), '—')}</td></tr>
                     <tr><th>Condición de reutilización</th><td>{esc(ap.get('license', {}).get('reuse_note'), 'Condiciones de reutilización por confirmar')}</td></tr>
                   </tbody>
                 </table>
               </div>
-              <div class="card-footer">
-                {viewer_btn}
-                {dl_btn}
+              <div class="card-footer" style="display:flex;flex-wrap:wrap;gap:0.45rem;">
+                {footer_btns}
               </div>
             </article>
             """
         )
 
     colaborar_logos_href = ctx.site_url("colaborar/") + "#anadir-actualizar-logos"
+
+    fig_meta_map: dict[str, tuple[str, str, str]] = {
+        "01_arquitectura_metodologica_gee": (
+            "Figura 1 · Arquitectura Metodológica",
+            "Flujo de Modelado Espacial sin Sobrecarga de Memoria en Google Earth Engine",
+            "Diagrama integral del pipeline Halo = 0: armonización de etiquetas por UPD, apilamiento de 71 bandas (64 dimensiones de Google Satellite Embeddings V1 + 7 covariables EO), entrenamiento Random Forest log-normal y exportación a 20 m, 250 m y 425 UPDs.",
+        ),
+        "02_cobertura_territorial_upds_amss": (
+            "Figura 2 · Cobertura e Imputación en 425 UPDs",
+            "Cierre del 100% de Vacíos Territoriales: 281 UPDs Observadas vs. 144 Imputadas por GEE",
+            "Comparación espacial de la cobertura de evidencia directa (permisos OPAMSS 2007–2026 y oferta 2025) frente a las 144 UPDs (57,647.5 ha) completadas mediante el modelo satelital en Google Earth Engine.",
+        ),
+        "03_calibracion_log_ols_opamss_mercado": (
+            "Figura 3 · Armonización Econométrica de Fuentes",
+            "Calibración Log-Lineal entre Trámites OPAMSS (2007–2026) y Precios de Oferta 2025",
+            "Estandarización estadística en escala logarítmica para consolidar una variable objetivo coherente en USD/m² sobre las 281 UPDs de entrenamiento del AMSS.",
+        ),
+        "04_mapa_resultados_malla_continua_250m": (
+            "Figura 4 · Malla Continua Metropolitana 250 m",
+            "Teselación Continua de 24,292 Celdas (6.25 ha) y Regímenes Morfológicos en el AMSS",
+            "Distribución espacial sin vacíos en los 28 distritos del AMSS ampliado (148,875.1 ha): distingue 2,215 celdas urbanas consolidadas (media $187.27/m²), 1,571 periurbanas en transición ($74.35/m²) y 20,506 rurales/reserva ($33.35/m²).",
+        ),
+        "05_correlaciones_google_embeddings_eo": (
+            "Figura 5 · Matriz de 71 Predictores",
+            "Correlaciones Empíricas de Google Satellite Embeddings V1 y Variables Físicas con ln(USD/m²)",
+            "De los 71 predictores evaluados, 64 resultan significativos (p < 0.05) y 24 superan |r| ≥ 0.50: lideran las dimensiones latentes A13 (r = -0.694), A32 (r = -0.660) y A34 (r = +0.650), junto con cobertura arbórea (-0.625), fracción edificada (+0.621) y luces VIIRS (+0.578).",
+        ),
+        "06_evaluacion_modelo_y_tipologias_urbanas": (
+            "Figura 6 · Validación y Diagnóstico",
+            "Desempeño Empírico (Observado vs. Predicho) y Gradientes por Régimen Territorial",
+            "Evaluación sobre las 281 UPDs con evidencia empírica: correlación lineal r = 0.7816 (r_log = 0.7238) y sesgo relativo de mediana de apenas -0.79% ($102.84 vs. $103.66 USD/m²).",
+        ),
+    }
 
     figuras_dir = ROOT / "web" / "assets" / "img" / "figuras"
     figuras_html = ""
@@ -2642,22 +2841,30 @@ def build_resultados_page(
             fig_cards = []
             for ff in fig_files:
                 f_url = html.escape(ctx.site_url(f"assets/img/figuras/{ff.name}"), quote=True)
-                f_label = esc(ff.stem.replace("_", " ").capitalize())
+                meta_tuple = fig_meta_map.get(ff.stem)
+                if meta_tuple:
+                    f_badge, f_title, f_desc = meta_tuple
+                else:
+                    f_badge = "Evidencia gráfica del repositorio"
+                    f_title = ff.stem.replace("_", " ").capitalize()
+                    f_desc = "Visualización analítica generada a partir de los datos procesados del proyecto."
                 fig_cards.append(
                     f"""
                     <article class="card">
-                      <span class="badge badge-ok">Evidencia gráfica del repositorio</span>
-                      <h3 style="margin:0.35rem 0 0.5rem;font-size:1rem;">{f_label}</h3>
-                      <a href="{f_url}" target="_blank" rel="noopener noreferrer" style="display:block;border:1px solid var(--c-border);border-radius:8px;overflow:hidden;background:#070A14;">
-                        <img src="{f_url}" alt="{f_label}" style="width:100%;height:auto;display:block;" loading="lazy">
+                      <span class="badge badge-ok">{esc(f_badge)}</span>
+                      <h3 style="margin:0.35rem 0 0.35rem;font-size:1rem;color:var(--c-brand-blue);">{esc(f_title)}</h3>
+                      <p style="font-size:0.84rem;color:var(--c-text-muted);margin:0 0 0.55rem;">{esc(f_desc)}</p>
+                      <a href="{f_url}" target="_blank" rel="noopener noreferrer" style="display:block;border:1px solid var(--c-border);border-radius:8px;overflow:hidden;background:#FFFFFF;">
+                        <img src="{f_url}" alt="{esc(f_title)}" style="width:100%;height:auto;display:block;" loading="lazy">
                       </a>
                     </article>
                     """
                 )
             figuras_html = f"""
-            <section class="section">
-              <h2>Figuras y visualizaciones analíticas incorporadas por el equipo</h2>
-              <p>Gráficos y salidas analíticas generadas a partir de los scripts del proyecto en <code>src/</code> y almacenadas en <code>web/assets/img/figuras/</code>:</p>
+            <section class="section" id="galeria-analitica-gee">
+              <span class="badge badge-lime">Cartografía Estática de Alta Resolución (300 DPI)</span>
+              <h2>Láminas Analíticas y Diagnóstico Estadístico de los Resultados Obtenidos</h2>
+              <p>Síntesis gráfica de alta resolución generada directamente sobre los resultados exportados de Google Earth Engine (haz clic en cualquier figura para ampliarla en tamaño completo):</p>
               <div class="grid-2">{"".join(fig_cards)}</div>
             </section>
             """
@@ -2666,18 +2873,18 @@ def build_resultados_page(
     <section class="hero">
       <div class="container">
         <div class="hero-eyebrow">
-          <span class="badge badge-lime">Evidencias y Atlas Urbano Regional</span>
+          <span class="badge badge-lime">Atlas Actualizado · Resultados Modelo GEE Integrados</span>
           <span class="badge badge-country">{esc(manifest['id'])}</span>
         </div>
-        <h1>Resultados disponibles, productos esperados y aporte al Atlas</h1>
-        <p class="hero-lead">Separación explícita entre insumos/evidencias documentales existentes y productos comprometidos como meta del PMV en {esc(manifest['territory']['label'])}.</p>
+        <h1>Resultados Obtenidos y Atlas Temático del Valor del Suelo en el AMSS</h1>
+        <p class="hero-lead">Consulta interactiva en el Atlas de las nuevas láminas del Modelo Continuo de Valor del Suelo (Píxel 20 m, Malla de 24,292 celdas a 250 m y 425 UPDs sin vacíos), las 10 series satelitales Copernicus y los 3 productos publicados al Atlas Urbano Regional.</p>
       </div>
     </section>
     """
 
     mv = (layers_cfg or {}).get("map_view", {})
-    initial_center = mv.get("initial_center", [-84.0, 10.0])
-    initial_zoom = float(mv.get("initial_zoom", 12))
+    initial_center = mv.get("center") or mv.get("initial_center", [-89.2182, 13.6989])
+    initial_zoom = float(mv.get("zoom") or mv.get("initial_zoom", 10.8))
     atlas_copernicus_section = render_copernicus_study_area_atlas_section(
         territory_label=manifest["territory"]["label"],
         initial_center=initial_center,
@@ -2686,36 +2893,147 @@ def build_resultados_page(
         pid=manifest["id"],
     )
 
+    resultados_gee_summary_section = f"""
+    <section class="section" id="resumen-resultados-gee">
+      <div class="section-header" style="margin-bottom:0.8rem;">
+        <div>
+          <span class="badge badge-ok">Síntesis Empírica Consolidada · Cobertura 100% AMSS</span>
+          <h2 style="margin:0.3rem 0 0.2rem;">Resumen Ejecutivo de los Resultados Obtenidos e Incorporados al Atlas</h2>
+          <p style="margin:0;color:var(--c-text-muted);font-size:0.92rem;">Principales indicadores cuantitativos generados por la integración de registros OPAMSS (2007–2026), oferta inmobiliaria 2025 (LISA) y el modelo Random Forest sobre <strong>Google Satellite Embeddings V1 (64 bandas) + 7 capas físicas Copernicus</strong>:</p>
+        </div>
+      </div>
+
+      <div class="grid-3" style="margin-bottom:1rem;">
+        <article class="card" style="border-top:4px solid #B91C1C;">
+          <span class="badge badge-lime">Lámina 12 · Malla 250 m</span>
+          <div style="font-size:1.75rem;font-weight:800;color:var(--c-brand-blue);margin:0.25rem 0;">24,292 celdas</div>
+          <p style="margin:0;font-size:0.85rem;color:var(--c-text-muted);">Teselación continua de 6.25 ha en 28 distritos (<strong>148,875.1 ha · 0 vacíos</strong>). Media global <strong>$50.04/m²</strong>, mediana <strong>$32.47/m²</strong>, P90 <strong>$93.83/m²</strong> y máximo <strong>$375.90/m²</strong>.</p>
+        </article>
+        <article class="card" style="border-top:4px solid #D97706;">
+          <span class="badge badge-lime">Lámina 11 · Superficie Píxel 20 m</span>
+          <div style="font-size:1.75rem;font-weight:800;color:var(--c-brand-blue);margin:0.25rem 0;">3.85 M píxeles</div>
+          <p style="margin:0;font-size:0.85rem;color:var(--c-text-muted);">Rango continuo de <strong>$8.66 a $471.13 USD/m²</strong> (3.63 M píxeles en suelo urbano/desarrollable con pendiente &lt; 35°; P95 = <strong>$176.17/m²</strong>, P99 = <strong>$317.72/m²</strong>).</p>
+        </article>
+        <article class="card" style="border-top:4px solid #0F766E;">
+          <span class="badge badge-lime">Lámina 12 · Cierre de Brecha UPD</span>
+          <div style="font-size:1.75rem;font-weight:800;color:var(--c-brand-blue);margin:0.25rem 0;">425 UPDs (0 vacíos)</div>
+          <p style="margin:0;font-size:0.85rem;color:var(--c-text-muted);">Combina <strong>281 UPDs observadas</strong> (66.1%) + <strong>144 UPDs imputadas por GEE</strong> (33.9% · 57,647.5 ha, mediana imputada <strong>$35.14/m²</strong>).</p>
+        </article>
+        <article class="card" style="border-top:4px solid #0284C7;">
+          <span class="badge badge-ok">Validación Empírica</span>
+          <div style="font-size:1.75rem;font-weight:800;color:var(--c-brand-blue);margin:0.25rem 0;">r = 0.7816</div>
+          <p style="margin:0;font-size:0.85rem;color:var(--c-text-muted);">Correlación lineal en las 281 UPDs observadas (<code>r_log = 0.7238</code>), con mediana predicha de <strong>$102.84/m²</strong> frente a <strong>$103.66/m²</strong> observada (sesgo <strong>-0.79%</strong>).</p>
+        </article>
+        <article class="card" style="border-top:4px solid #7C3AED;">
+          <span class="badge badge-ok">Poder Explicativo Embeddings</span>
+          <div style="font-size:1.75rem;font-weight:800;color:var(--c-brand-blue);margin:0.25rem 0;">64 / 71 bandas</div>
+          <p style="margin:0;font-size:0.85rem;color:var(--c-text-muted);">Significativas con <code>p &lt; 0.05</code> (24 con <code>|r| ≥ 0.50</code>). Destacan <code>A13</code> (<strong>-0.694</strong>), <code>A32</code> (<strong>-0.660</strong>), <code>A34</code> (<strong>+0.650</strong>), <code>wc_trees</code> (<strong>-0.625</strong>) y <code>wc_built</code> (<strong>+0.621</strong>).</p>
+        </article>
+        <article class="card" style="border-top:4px solid #16A34A;">
+          <span class="badge badge-ok">Catálogo Atlas Regional</span>
+          <div style="font-size:1.75rem;font-weight:800;color:var(--c-brand-blue);margin:0.25rem 0;">3 Productos</div>
+          <p style="margin:0;font-size:0.85rem;color:var(--c-text-muted);">Fichas estandarizadas en <code>atlas/products/</code> con estado <strong>publicado</strong> (Indicador 425 UPDs, Datos Malla 250 m y Mapa Ráster COG 20 m).</p>
+        </article>
+      </div>
+
+      <div class="table-wrap" style="margin-bottom:0.9rem;">
+        <table>
+          <thead>
+            <tr>
+              <th>Régimen Morfológico en Malla 250 m</th>
+              <th>Celdas (250 × 250 m)</th>
+              <th>Superficie (ha / %)</th>
+              <th>Media Estimada (USD/m²)</th>
+              <th>Mediana (USD/m²)</th>
+              <th>Percentil P90 (USD/m²)</th>
+              <th>Máximo Celda (USD/m²)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>🟥 Urbano Consolidado</strong> (<code>URBANO_CONSOLIDADO</code>)</td>
+              <td>2,215</td>
+              <td>13,824.6 ha (9.3%)</td>
+              <td><strong>$187.27</strong></td>
+              <td>$169.24</td>
+              <td>$302.70</td>
+              <td>$375.90</td>
+            </tr>
+            <tr>
+              <td><strong>🟧 Periurbano en Transición</strong> (<code>PERIURBANO_TRANSICION</code>)</td>
+              <td>1,571</td>
+              <td>9,578.1 ha (6.4%)</td>
+              <td><strong>$74.35</strong></td>
+              <td>$67.49</td>
+              <td>$122.40</td>
+              <td>$289.40</td>
+            </tr>
+            <tr>
+              <td><strong>🟩 Rural / Reserva Ambiental</strong> (<code>RURAL_RESERVA</code>)</td>
+              <td>20,506</td>
+              <td>125,472.4 ha (84.3%)</td>
+              <td><strong>$33.35</strong></td>
+              <td>$31.11</td>
+              <td>$43.82</td>
+              <td>$168.50</td>
+            </tr>
+            <tr style="background:#F1F5F9;font-weight:700;">
+              <td>Total Ámbito Metropolitano (AMSS Ampliado)</td>
+              <td>24,292</td>
+              <td>148,875.1 ha (100%)</td>
+              <td>$50.04</td>
+              <td>$32.47</td>
+              <td>$93.83</td>
+              <td>$375.90</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
+        <a class="btn btn-primary btn-xs" href="{modelo_url}">📖 Ver Subpágina de Metodología, Resultados y Mejoras →</a>
+        <a class="btn btn-teal btn-xs" href="{gv_url}">🧭 Explorar todas las capas en el Geovisor GeoLibre →</a>
+        <a class="btn btn-outline btn-xs" href="{docx_url}" download="Metodologia_Modelo_Valor_Suelo_AMSS_GEE.docx">📄 Documento Word Metodología y Resultados (.docx)</a>
+        <a class="btn btn-outline btn-xs" href="{gee_js_url}" download="gee_modelo_valor_suelo_amss.js">💻 Script Google Earth Engine (.js)</a>
+        <a class="btn btn-outline btn-xs" href="{corr_csv_url}" download="amss_correlaciones_embeddings_suelo.csv">📊 Matriz 71 Correlaciones (.csv)</a>
+        <a class="btn btn-outline btn-xs" href="{gee_pdf_url}" download="Atlas_Resultados_Modelo_Suelo_GEE_AMSS.pdf">📘 Anexo PDF Láminas GEE (3 Págs.)</a>
+      </div>
+    </section>
+    """
+
     body = f"""
     {render_status_strip(manifest)}
 
     {atlas_copernicus_section}
 
-    <section class="section">
-      <div class="grid-2">
-        <article class="card">
-          <span class="badge badge-declarado">Según el perfil</span>
-          <h3>Productos y entregables esperados</h3>
-          <ul>{outputs_li}</ul>
-        </article>
-        <article class="card">
-          <span class="badge badge-pendiente">Verificación independiente</span>
-          <h3>Estado de evidencias operativas</h3>
-          <p><strong>Revisión técnica:</strong> {esc(manifest['status']['technical_review']['state'])} (revisor: {esc(manifest['status']['technical_review'].get('reviewer'), 'pendiente')}).</p>
-          <p><strong>Validación institucional:</strong> {esc(manifest['status']['institutional_validation']['state'])} (referente: {esc(manifest['status']['institutional_validation'].get('reviewer'), 'pendiente')}).</p>
-          <p><strong>Adopción institucional:</strong> {esc(manifest['status']['adoption']['state'])}.</p>
-          <p style="font-size:0.86rem;color:var(--c-text-muted);">Para cambiar cualquiera de estos estados a <em>validado</em> o <em>uso documentado</em>, el esquema exige registrar fecha, persona revisora y URL HTTPS de evidencia verificable.</p>
-        </article>
-      </div>
-    </section>
+    {resultados_gee_summary_section}
 
-    <section class="section">
-      <h2>Contribución prevista al Atlas Urbano Regional</h2>
-      <p>Metadatos estructurados en <code>atlas/products/</code> conforme a <code>atlas-product.schema.json</code>:</p>
+    <section class="section" id="aportes-atlas-regional">
+      <span class="badge badge-lime">Metadatos Estandarizados · Esquema 1.0.0</span>
+      <h2>Productos Publicados en el Atlas Urbano Regional (<code>atlas/products/</code>)</h2>
+      <p>Fichas técnicas actualizadas conforme a <code>atlas-product.schema.json</code> con los tres entregables geoespaciales obtenidos del modelo continuo de valor del suelo en el AMSS:</p>
       {"".join(atlas_cards) if atlas_cards else "<p>Sin fichas de Atlas registradas todavía.</p>"}
     </section>
 
     {figuras_html}
+
+    <section class="section">
+      <div class="grid-2">
+        <article class="card">
+          <span class="badge badge-declarado">Según el perfil</span>
+          <h3>Productos y entregables comprometidos en el perfil</h3>
+          <ul>{outputs_li}</ul>
+        </article>
+        <article class="card">
+          <span class="badge badge-pendiente">Gobernanza y verificación independiente</span>
+          <h3>Estado de revisión formal en manifiesto</h3>
+          <p><strong>Revisión técnica:</strong> {esc(manifest['status']['technical_review']['state'])} (revisor: {esc(manifest['status']['technical_review'].get('reviewer'), 'pendiente de designación formal')}).</p>
+          <p><strong>Validación institucional:</strong> {esc(manifest['status']['institutional_validation']['state'])} (referente: {esc(manifest['status']['institutional_validation'].get('reviewer'), 'pendiente de sesión OPAMSS')}).</p>
+          <p><strong>Adopción institucional:</strong> {esc(manifest['status']['adoption']['state'])}.</p>
+          <p style="font-size:0.86rem;color:var(--c-text-muted);">Los tres productos técnicos del modelo GEE ya se encuentran publicados y documentados; para elevar el estado formal del manifiesto a <em>validado</em>, el contrato exige registrar fecha, revisor institucional y acta/evidencia HTTPS.</p>
+        </article>
+      </div>
+    </section>
 
     <section class="section">
       <div class="prose">

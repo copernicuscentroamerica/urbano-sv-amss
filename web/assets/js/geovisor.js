@@ -3265,6 +3265,241 @@
         { color: "#FF3366", label: "1% – 25% Ocurrencia (Rosa / Magenta)", desc: "Llanuras de inundación episódica donde se han registrado desbordamientos históricos durante eventos extremos." },
         { color: "#364564", label: "Fondo topográfico sin ocurrencia hídrica", desc: "Relieve emergido atenuado para destacar con alto contraste cauces y planicies inundables a 30 m." }
       ]
+    },
+    "gee-pixel-suelo-20m": {
+      id: "gee-pixel-suelo-20m",
+      number: "Lámina 11",
+      shortTitle: "💰 11. Valor del Suelo Píxel 20 m (Modelo GEE)",
+      title: "Superficie Continua a Nivel de Píxel (20 m) — Valor Estimado del Suelo AMSS (Google Satellite Embeddings V1 + EO)",
+      sensor: "Google Earth Engine · Random Forest (200 árboles) sobre 71 predictores: Google Satellite Embeddings V1 (64 bandas) + Open Buildings 2.5D + WorldCover 10 m + VIIRS DNB + Copernicus DEM GLO-30",
+      formula: "V_est(x,y) = exp(RF_log(71 bandas)) · 3.85 M píxeles a 20 m · Rango $8.66 a $471.13 USD/m² (Mediana urbana $32.34 · P95 $176.17 · P99 $317.72/m²)",
+      selectorLabel: "🎛️ Seleccionar superficie continua a 20 m generada en Google Earth Engine:",
+      defaultVariant: "gee-pixel-20m-urbano",
+      variants: [
+        {
+          key: "gee-pixel-20m-urbano",
+          pill: "Píxel 20 m · Urbano y Desarrollable",
+          label: "Superficie Píxel 20 m · Suelo Urbano y Desarrollable (3.63 M píxeles · Pendiente < 35° sin agua)",
+          title: "Superficie Continua de Valor del Suelo a 20 m · Suelo Urbano y Desarrollable (Pendiente < 35° · USD/m²)",
+          formula: "Máscara de aptitud constructiva (Pendiente GLO-30 < 35° y sin agua permanente WorldCover) · 3,631,473 píxeles válidos"
+        },
+        {
+          key: "gee-pixel-20m-potencial",
+          pill: "Píxel 20 m · Potencial Completo",
+          label: "Superficie Píxel 20 m · Potencial Continuo Completo (3.85 M píxeles · 100% AMSS sin máscara)",
+          title: "Superficie Continua de Valor Potencial del Suelo a 20 m · Cobertura Completa AMSS (USD/m²)",
+          formula: "Inferencia continua Halo = 0 en los 3,845,824 píxeles del ámbito metropolitano (1,488.8 km²)"
+        }
+      ],
+      reading:
+        "Muestra a resolución de 20 metros el gradiente continuo del valor del suelo en el AMSS obtenido mediante aprendizaje automático sobre Google Satellite Embeddings V1 y variables físicas Copernicus. Destaca el núcleo policéntrico de máxima plusvalía (San Benito, Escalón, Antiguo Cuscatlán y Santa Tecla > $300 USD/m²), los corredores logísticos e industriales intermedios ($100–$175/m²) y la transición hacia reservas volcánicas y rurales (≤ $30/m²).",
+      swatches: [
+        { color: "#67001F", label: "> $420 USD/m² (Granate prime · Máx. $471.13)", desc: "Núcleos corporativos y financieros de máxima capitalización (San Benito, Santa Elena, Paseo General Escalón)." },
+        { color: "#B30000", label: "$300 – $420 USD/m² (Rojo carmesí)", desc: "Ejes comerciales metropolitanos primarios, subcentros de servicios y desarrollos verticales consolidados." },
+        { color: "#E34A33", label: "$175 – $300 USD/m² (Rojo anaranjado)", desc: "Tejido residencial medio-alto y corredores terciarios consolidados en San Salvador, Antiguo Cuscatlán y Santa Tecla." },
+        { color: "#FC8D59", label: "$100 – $175 USD/m² (Naranja coral)", desc: "Tejido urbano consolidado de densidad media, nodos distritales y parques logísticos-industriales." },
+        { color: "#FDBB84", label: "$50 – $100 USD/m² (Ámbar claro)", desc: "Frentes de expansión periurbana activa sobre los corredores Norte (Apopa), Oriente (Soyapango–Ilopango) y Sur." },
+        { color: "#FDD49E", label: "$30 – $50 USD/m² (Crema cálido)", desc: "Borde rururbano de baja densidad constructiva y asentamientos dispersos en piedemonte." },
+        { color: "#FEF0D9", label: "≤ $30 USD/m² (Marfil · Reserva / Rural)", desc: "Suelos agrícolas, cafetales de sombra, laderas volcánicas y áreas de recarga hídrica (mínimo $8.66/m²)." }
+      ]
+    },
+    "gee-malla-upds-suelo": {
+      id: "gee-malla-upds-suelo",
+      number: "Lámina 12",
+      shortTitle: "🗺️ 12. Malla 250 m y 425 UPDs (Resultados GEE)",
+      title: "Malla Continua Metropolitana (24,292 Celdas de 250 m) e Imputación de las 425 UPDs sin Vacíos",
+      sensor: "Síntesis Zonal GEE (250 × 250 m · 6.25 ha) + Consolidación de 281 UPDs Observadas (OPAMSS / Oferta 2025) y 144 UPDs Imputadas",
+      formula: "Malla: 24,292 celdas (Media $50.04 · Mediana $32.47 · P90 $93.83 · Máx. $375.90/m²) | 425 UPDs: r = 0.7816 (0 vacíos)",
+      selectorLabel: "🗺️ Seleccionar capa vectorial de resultados obtenidos (clic en cualquier polígono del mapa para inspeccionar):",
+      defaultVariant: "gee-malla-250m-homol",
+      variants: [
+        {
+          key: "gee-malla-250m-homol",
+          pill: "Malla 250 m · Valor USD/m²",
+          label: "1. Malla Continua 250 m · Valor Estimado Homologado (24,292 celdas · USD/m²)",
+          title: "Malla Continua Metropolitana 250 m · Valor Estimado del Suelo (24,292 Celdas · 0 Vacíos)",
+          formula: "Reducción zonal media/mediana/DE desde píxel de 20 m sobre 24,292 celdas de 6.25 ha (148,875.1 ha totales)"
+        },
+        {
+          key: "gee-malla-250m-tipologia",
+          pill: "Malla 250 m · Régimen Urbano/Rural",
+          label: "2. Malla Continua 250 m · Régimen Morfológico (Urbano Consolidado / Periurbano / Rural)",
+          title: "Clasificación Morfológica de las 24,292 Celdas de 250 m (Urbano Consolidado, Periurbano y Rural)",
+          formula: "Clasificación por fracción edificada 10 m y altura 2.5D Open Buildings (2,215 urbanas · 1,571 periurbanas · 20,506 rurales)",
+          swatches: [
+            { color: "#B91C1C", label: "Urbano Consolidado (2,215 celdas · 13,825 ha)", desc: "Fracción edificada ≥ 40% o altura media ≥ 3.5 m. Valor medio: $187.27/m² (Mediana $169.24 · P90 $302.70/m²)." },
+            { color: "#F59E0B", label: "Periurbano en Transición (1,571 celdas · 9,578 ha)", desc: "Fracción edificada entre 10% y 40%. Frentes de expansión activa con valor medio de $74.35/m² (Mediana $67.49/m²)." },
+            { color: "#0F766E", label: "Rural / Reserva Ambiental (20,506 celdas · 125,472 ha)", desc: "Fracción edificada < 10%. Matrices agroforestales y volcánicas con valor medio de $33.35/m² (Mediana $31.11/m²)." }
+          ]
+        },
+        {
+          key: "gee-malla-250m-quintiles",
+          pill: "Malla 250 m · Quintiles P20–P80",
+          label: "3. Malla Continua 250 m · Quintiles Metropolitanos (4,858 celdas por clase)",
+          title: "Distribución por Quintiles Metropolitanos de Valor del Suelo (Malla 250 m · P20 a P80)",
+          formula: "Cortes empíricos exactos sobre 24,292 celdas: P20=$27.46 · P40=$30.73 · P60=$34.73 · P80=$46.33 USD/m²",
+          swatches: [
+            { color: "#440154", label: "Quintil 5 · Superior (> $46.33 hasta $375.90/m²)", desc: "20% superior metropolitano (4,859 celdas): concentra la totalidad del tejido urbano consolidado y subcentros." },
+            { color: "#3B528B", label: "Quintil 4 · Medio-Alto ($34.74 – $46.33/m²)", desc: "Coronas periurbanas inmediatas y corredores secundarios en proceso de densificación." },
+            { color: "#21918C", label: "Quintil 3 · Intermedio ($30.74 – $34.73/m²)", desc: "Transición agrourbana accesible y valles intermedios." },
+            { color: "#5EC962", label: "Quintil 2 · Medio-Bajo ($27.47 – $30.73/m²)", desc: "Terrenos rurales de pendiente moderada y cafetales periféricos." },
+            { color: "#FDE725", label: "Quintil 1 · Base (≤ $27.46/m²)", desc: "Zonas montañosas escarpadas, cañones y áreas de máxima restricción topográfica." }
+          ]
+        },
+        {
+          key: "gee-upd-425-fin",
+          pill: "425 UPDs · Valor Integrado (0 Vacíos)",
+          label: "4. 425 UPDs Completas · Valor Integrado 2025 sin Vacíos (Observado + Imputado GEE)",
+          title: "Cobertura Completa de las 425 UPDs del AMSS · Valor del Suelo Integrado sin Vacíos (USD/m²)",
+          formula: "VAL_FIN_M2 = Valor observado en 281 UPDs + Imputación satelital GEE en 144 UPDs (r = 0.7816 · sesgo mediana -0.79%)",
+          swatches: [
+            { color: "#B30000", label: "Alto (> $300 USD/m² · 37 UPDs)", desc: "UPDs corporativas y residenciales prime del eje central-poniente." },
+            { color: "#E34A33", label: "Medio-Alto ($175 – $300 USD/m² · 53 UPDs)", desc: "UPDs residenciales consolidadas y subcentros comerciales." },
+            { color: "#FC8D59", label: "Medio ($100 – $175 USD/m² · 67 UPDs)", desc: "Tejido urbano intermedio y corredores industriales-logísticos." },
+            { color: "#FDCC8A", label: "Medio-Bajo ($50 – $100 USD/m² · 91 UPDs)", desc: "Sectores periféricos consolidados y cabeceras distritales." },
+            { color: "#FEF0D9", label: "Bajo (≤ $50 USD/m² · 177 UPDs)", desc: "UPDs periurbanas extensivas y sectores rurales imputados sin muestra previa." }
+          ]
+        },
+        {
+          key: "gee-upd-425-origen",
+          pill: "425 UPDs · Observado vs. Imputado",
+          label: "5. 425 UPDs · Mapa de Procedencia: 281 Observadas vs. 144 Imputadas por Modelo GEE",
+          title: "Cierre de Brecha Cartográfica: 281 UPDs Observadas vs. 144 UPDs Imputadas por Satélite (57,648 ha)",
+          formula: "ORIGEN_FIN: 66.1% con evidencia directa (OPAMSS / Oferta 2025) + 33.9% completado mediante Google Satellite Embeddings V1",
+          swatches: [
+            { color: "#0F766E", label: "Observado / Calibrado 2025 (281 UPDs · 66.1%)", desc: "Unidades con registros verificados de oferta inmobiliaria 2025 y/o permisos OPAMSS (mediana observada $103.66/m²)." },
+            { color: "#F59E0B", label: "Imputado por Modelo GEE (144 UPDs · 33.9% · 57,648 ha)", desc: "Unidades previamente vacías completadas por el modelo GEE (mediana imputada $35.14/m², rango $17.75–$267.21/m²)." }
+          ]
+        },
+        {
+          key: "lisa-mercado-2025",
+          pill: "Clusters LISA · Oferta 2025",
+          label: "6. Autocorrelación Espacial LISA (Moran Local) · Precios de Oferta Inmobiliaria 2025",
+          title: "Clusters Espaciales LISA (Índice Local de Moran) · Oferta Inmobiliaria 2025 en 265 UPDs",
+          formula: "Cuadrantes de autocorrelación espacial bivariada/local I_i sobre log-precios de oferta 2025",
+          swatches: [
+            { color: "#D7191C", label: "Alto-Alto · Hotspot de Plusvalía (122 UPDs)", desc: "Concentración estadísticamente contigua de valores altos en el corredor poniente-suroeste." },
+            { color: "#2C7BB6", label: "Bajo-Bajo · Coldspot Periférico (78 UPDs)", desc: "Agrupamiento homogéneo de valores bajos en coronas norte y nororiente." },
+            { color: "#ABD9E9", label: "Bajo-Alto · Isla de Menor Valor (33 UPDs)", desc: "UPDs de menor precio relativo rodeadas de vecindarios de alta valorización (potencial de recualificación)." },
+            { color: "#FDAE61", label: "Alto-Bajo · Subcentro Aislado (32 UPDs)", desc: "Polos comerciales o logísticos de alto valor inmersos en entornos periféricos de menor precio." }
+          ]
+        }
+      ],
+      reading:
+        "Integra en un solo lienzo interactivo la teselación continua de 24,292 celdas de 250 m y las 425 Unidades de Planificación Detallada (UPDs) del AMSS sin un solo vacío de información. Haz clic sobre cualquier celda o polígono en el mapa para consultar su valor estimado en USD/m², mediana, desviación estándar intra-celda, régimen morfológico, altura edificada 2.5D y distrito.",
+      swatches: [
+        { color: "#990000", label: "Nodos Prime (> $300 USD/m² · 241 celdas)", desc: "Subcentros corporativos y residenciales de máxima densidad económica (hasta $375.90/m² a escala de celda)." },
+        { color: "#E34A33", label: "Urbano Alto ($175 – $300 USD/m² · 836 celdas)", desc: "Áreas urbanas consolidadas de alta renta en Antiguo Cuscatlán, San Salvador y Santa Tecla." },
+        { color: "#FC8D59", label: "Urbano Medio ($100 – $175 USD/m² · 1,218 celdas)", desc: "Tejido residencial e industrial consolidado sobre ejes viales estructurantes." },
+        { color: "#FDBB84", label: "Transición ($50 – $100 USD/m² · 2,215 celdas)", desc: "Bordes urbanos y corredores de expansión metropolitana." },
+        { color: "#FDD49E", label: "Periurbano Bajo ($30 – $50 USD/m² · 11,225 celdas)", desc: "Piedemonte y transición agrourbana de baja compacidad." },
+        { color: "#FEF0D9", label: "Reserva / Rural (≤ $30 USD/m² · 8,557 celdas)", desc: "Suelos rurales, forestales y relieves volcánicos del AMSS ampliado." }
+      ]
+    }
+  };
+
+  function makeAtlasNumericStepExpr(propName, breaks, colors, noDataColor) {
+    var stepArr = ["step", ["coalesce", ["to-number", ["get", propName]], 0], colors[0]];
+    for (var i = 0; i < breaks.length; i++) {
+      stepArr.push(breaks[i], colors[i + 1]);
+    }
+    return [
+      "case",
+      ["all", ["has", propName], ["!=", ["get", propName], null], [">", ["to-number", ["get", propName]], 0]],
+      stepArr,
+      noDataColor || "#CBD5E1"
+    ];
+  }
+
+  var ATLAS_LOCAL_VARIANTS = {
+    "gee-pixel-20m-urbano": {
+      kind: "image_overlay",
+      imagePath: "geovisor/data/amss_pixel_20m_urbano.png",
+      bounds: [-89.628689, 13.418135, -89.025201, 13.920473],
+      opacity: 0.9,
+      districtOutlinePath: "geovisor/capas/amss_14_distritos.geojson"
+    },
+    "gee-pixel-20m-potencial": {
+      kind: "image_overlay",
+      imagePath: "geovisor/data/amss_pixel_20m_potencial.png",
+      bounds: [-89.628689, 13.418135, -89.025201, 13.920473],
+      opacity: 0.9,
+      districtOutlinePath: "geovisor/capas/amss_14_distritos.geojson"
+    },
+    "gee-malla-250m-homol": {
+      kind: "geojson",
+      sourcePath: "geovisor/capas/amss_malla_continua_250m.geojson",
+      badge: "ATLAS GEE · MALLA CONTINUA 250 M",
+      fillExpr: makeAtlasNumericStepExpr("VAL_EST_M2", [30, 50, 100, 175, 300], ["#FEF0D9", "#FDD49E", "#FDBB84", "#FC8D59", "#E34A33", "#990000"], "#CBD5E1"),
+      fillOpacity: 0.85,
+      fineMesh: true,
+      districtOutlinePath: "geovisor/capas/amss_14_distritos.geojson"
+    },
+    "gee-malla-250m-tipologia": {
+      kind: "geojson",
+      sourcePath: "geovisor/capas/amss_malla_continua_250m.geojson",
+      badge: "ATLAS GEE · RÉGIMEN MORFOLÓGICO 250 M",
+      fillExpr: [
+        "match",
+        ["get", "TIPO_SUELO"],
+        "URBANO_CONSOLIDADO", "#B91C1C",
+        "PERIURBANO_TRANSICION", "#F59E0B",
+        "RURAL_RESERVA", "#0F766E",
+        "#CBD5E1"
+      ],
+      fillOpacity: 0.82,
+      fineMesh: true,
+      districtOutlinePath: "geovisor/capas/amss_14_distritos.geojson"
+    },
+    "gee-malla-250m-quintiles": {
+      kind: "geojson",
+      sourcePath: "geovisor/capas/amss_malla_continua_250m.geojson",
+      badge: "ATLAS GEE · QUINTILES METROPOLITANOS 250 M",
+      fillExpr: makeAtlasNumericStepExpr("VAL_EST_M2", [27.46, 30.73, 34.73, 46.33], ["#FDE725", "#5EC962", "#21918C", "#3B528B", "#440154"], "#CBD5E1"),
+      fillOpacity: 0.84,
+      fineMesh: true,
+      districtOutlinePath: "geovisor/capas/amss_14_distritos.geojson"
+    },
+    "gee-upd-425-fin": {
+      kind: "geojson",
+      sourcePath: "geovisor/capas/amss_upd_425_imputadas.geojson",
+      badge: "ATLAS GEE · 425 UPDS INTEGRADAS (0 VACÍOS)",
+      fillExpr: makeAtlasNumericStepExpr("VAL_FIN_M2", [50, 100, 175, 300], ["#FEF0D9", "#FDCC8A", "#FC8D59", "#E34A33", "#B30000"], "#CBD5E1"),
+      fillOpacity: 0.84,
+      fineMesh: false,
+      districtOutlinePath: "geovisor/capas/amss_14_distritos.geojson"
+    },
+    "gee-upd-425-origen": {
+      kind: "geojson",
+      sourcePath: "geovisor/capas/amss_upd_425_imputadas.geojson",
+      badge: "ATLAS GEE · COBERTURA OBSERVADA VS. IMPUTADA",
+      fillExpr: [
+        "match",
+        ["get", "ORIGEN_FIN"],
+        "OBSERVADO", "#0F766E",
+        "IMPUTADO_MODELO_GEE", "#F59E0B",
+        "#94A3B8"
+      ],
+      fillOpacity: 0.84,
+      fineMesh: false,
+      districtOutlinePath: "geovisor/capas/amss_14_distritos.geojson"
+    },
+    "lisa-mercado-2025": {
+      kind: "geojson",
+      sourcePath: "geovisor/capas/LISA_PRECIOS_2025.geojson",
+      badge: "ATLAS · AUTOCORRELACIÓN ESPACIAL LISA 2025",
+      fillExpr: [
+        "match",
+        ["get", "cuadrante_"],
+        "Alto-Alto", "#D7191C",
+        "Bajo-Bajo", "#2C7BB6",
+        "Bajo-Alto", "#ABD9E9",
+        "Alto-Bajo", "#FDAE61",
+        "#CBD5E1"
+      ],
+      fillOpacity: 0.84,
+      fineMesh: false,
+      districtOutlinePath: "geovisor/capas/amss_14_distritos.geojson"
     }
   };
 
@@ -3307,7 +3542,22 @@
     var plateTabs = Array.prototype.slice.call(document.querySelectorAll("[data-atlas-plate]"));
     var plateJumpBtns = Array.prototype.slice.call(document.querySelectorAll("[data-atlas-plate-select]"));
 
-    var baseUrl = document.body.getAttribute("data-baseurl") || "/";
+    var baseUrl = document.body.getAttribute("data-baseurl") || mapContainer.getAttribute("data-baseurl") || "";
+    if (!baseUrl) {
+      var gvScripts = document.querySelectorAll('script[src*="assets/js/geovisor.js"]');
+      if (gvScripts.length) {
+        try {
+          var sPath = new URL(gvScripts[gvScripts.length - 1].src, window.location.href).pathname;
+          baseUrl = sPath.replace(/assets\/js\/geovisor\.js.*$/i, "") || "/";
+        } catch (e) {
+          baseUrl = "/";
+        }
+      } else {
+        baseUrl = "/";
+      }
+    }
+    if (baseUrl.charAt(0) !== "/") baseUrl = "/" + baseUrl;
+    if (baseUrl.charAt(baseUrl.length - 1) !== "/") baseUrl = baseUrl + "/";
     var initialCenterAttr = mapContainer.getAttribute("data-center");
     var initialZoomAttr = mapContainer.getAttribute("data-zoom");
     var currentCenter = [-84.0, 10.0];
@@ -3317,13 +3567,17 @@
       } catch (e) {}
     }
     var currentZoom = initialZoomAttr ? parseFloat(initialZoomAttr) : 12;
-    var currentPlateKey = plateTabs.length ? plateTabs[0].getAttribute("data-atlas-plate") : "sentinel2-cloudless";
+    var defaultPlateAttr = mapContainer.getAttribute("data-default-plate");
+    var currentPlateKey = (defaultPlateAttr && ATLAS_PLATES[defaultPlateAttr])
+      ? defaultPlateAttr
+      : (plateTabs.length ? plateTabs[0].getAttribute("data-atlas-plate") : "sentinel2-cloudless");
     if (!ATLAS_PLATES[currentPlateKey]) currentPlateKey = "sentinel2-cloudless";
     var currentVariantKey = ATLAS_PLATES[currentPlateKey].defaultVariant;
     var currentPerimeterGeoJson = null;
     var allHubPerimeters = null;
     var atlasMap = null;
     var mountedVariantMap = {};
+    var atlasGeoJsonCache = {};
     var isPlayingTimeline = false;
     var playTimerId = null;
 
@@ -3348,7 +3602,12 @@
     function getTimelineSequence(plateObj, activeVarKey) {
       if (!plateObj) return [];
       var pid = plateObj.id;
-      if (pid === "copernicus-dem-glo30" || pid === "jrc-gsw-occurrence") {
+      if (
+        pid === "copernicus-dem-glo30" ||
+        pid === "jrc-gsw-occurrence" ||
+        pid === "gee-pixel-suelo-20m" ||
+        pid === "gee-malla-upds-suelo"
+      ) {
         return [];
       }
       if (pid === "s2-l2a-composites") {
@@ -3588,8 +3847,279 @@
       });
     }
 
+    function fetchAtlasGeoJson(relPath, cb) {
+      if (atlasGeoJsonCache[relPath]) {
+        cb(atlasGeoJsonCache[relPath]);
+        return;
+      }
+      var resolvedUrl = /^https?:\/\//i.test(relPath)
+        ? relPath
+        : new URL(relPath, window.location.origin + baseUrl).href;
+      fetch(resolvedUrl)
+        .then(function (r) {
+          return r.ok ? r.json() : null;
+        })
+        .then(function (gj) {
+          if (gj) atlasGeoJsonCache[relPath] = gj;
+          cb(gj);
+        })
+        .catch(function () {
+          cb(null);
+        });
+    }
+
+    function attachAtlasFeaturePopup(layerId, badgeTitle) {
+      if (!atlasMap) return;
+      atlasMap.on("click", layerId, function (e) {
+        if (e.originalEvent && e.originalEvent._atlasPopupHandled) return;
+        if (!e.features || !e.features.length) return;
+        if (e.originalEvent) e.originalEvent._atlasPopupHandled = true;
+        var props = e.features[0].properties || {};
+        var nameVal = props.NAME_UPD || props.nombre || "Polígono Atlas";
+        var rows = [];
+        if (props.ID_CELDA !== undefined && props.ID_CELDA !== null) {
+          nameVal = "Celda " + String(props.ID_CELDA) + (props.DISTRITO ? " · " + String(props.DISTRITO) : "");
+          rows.push(["Valor estimado (Media celda)", "$" + Number(props.VAL_EST_M2 || 0).toFixed(2) + " USD/m²"]);
+          rows.push([
+            "Mediana / Potencial celda",
+            "$" + Number(props.VAL_MED_M2 || 0).toFixed(2) + " / $" + Number(props.VAL_POT_M2 || 0).toFixed(2) + " USD/m²"
+          ]);
+          rows.push(["Dispersión intra-celda (DE)", "± $" + Number(props.VAL_STD_M2 || 0).toFixed(2) + " USD/m²"]);
+          rows.push(["Régimen morfológico GEE", String(props.TIPO_SUELO || "—").replace(/_/g, " ")]);
+          var pctEd = props.PCT_EDIF !== undefined && props.PCT_EDIF !== null
+            ? Number(props.PCT_EDIF)
+            : Number(props.FRAC_EDIF || 0) * 100;
+          rows.push(["Fracción construida (10 m)", pctEd.toFixed(1) + "%"]);
+          rows.push(["Altura media 2.5D (Open Buildings)", Number(props.ALT_EDIF_M || 0).toFixed(2) + " m"]);
+          rows.push(["Pendiente media (GLO-30)", Number(props.PEND_DEG || 0).toFixed(1) + "°"]);
+          rows.push(["Distrito / Superficie", (props.DISTRITO || "AMSS") + " · " + Number(props.AREA_HA || 0).toFixed(2) + " ha"]);
+        } else if (props.ORIGEN_FIN !== undefined && props.ORIGEN_FIN !== null) {
+          nameVal = (props.NAME_UPD || ("UPD #" + (props.OBJECTID || ""))) + (props.DISTRITO ? " · " + String(props.DISTRITO) : "");
+          rows.push(["Valor integrado 2025 (VAL_FIN_M2)", "$" + Number(props.VAL_FIN_M2 || 0).toFixed(2) + " USD/m²"]);
+          rows.push([
+            "Fuente de consolidación",
+            props.ORIGEN_FIN === "OBSERVADO" ? "Observado / Calibrado 2025" : "Imputado por Modelo Satelital GEE"
+          ]);
+          rows.push(["Predicción satelital GEE (VAL_MOD_M2)", "$" + Number(props.VAL_MOD_M2 || 0).toFixed(2) + " USD/m²"]);
+          rows.push(["Tipología UPD / Superficie", (props.TIPO || "—") + " · " + Number(props.AREA_HA || 0).toFixed(2) + " ha"]);
+          rows.push(["Distrito / Municipio", (props.DISTRITO || "—") + (props.MUNICIPIO ? " · " + props.MUNICIPIO : "")]);
+        } else if (props.promedio_2025 !== undefined && props.promedio_2025 !== null) {
+          nameVal = (props.NAME_UPD || "UPD") + (props.nomb_distr ? " · " + String(props.nomb_distr) : "");
+          rows.push(["Precio promedio 2025 (Oferta)", "$" + Number(props.promedio_2025).toFixed(2) + " USD/m²"]);
+          if (props.cuadrante_) rows.push(["Cuadrante LISA (Moran)", String(props.cuadrante_)]);
+          if (props.cluster_p05) rows.push(["Significancia LISA (p≤0.05)", String(props.cluster_p05)]);
+          if (props.moran_loca !== undefined) rows.push(["I de Moran Local", String(props.moran_loca) + " (p=" + props.p_perm_loc + ")"]);
+        }
+        if (!rows.length) rows.push(["Estado", "Capa temática activa en el Atlas"]);
+        var dom = createSafePopupElement(String(nameVal), rows.slice(0, 9), badgeTitle || "ATLAS TEMÁTICO AMSS");
+        new window.maplibregl.Popup({ maxWidth: "350px" }).setLngLat(e.lngLat).setDOMContent(dom).addTo(atlasMap);
+      });
+      atlasMap.on("mouseenter", layerId, function () {
+        atlasMap.getCanvas().style.cursor = "pointer";
+      });
+      atlasMap.on("mouseleave", layerId, function () {
+        atlasMap.getCanvas().style.cursor = "";
+      });
+    }
+
+    function syncMountedVariantVisibilities(activeKey) {
+      if (!atlasMap) return;
+      Object.keys(mountedVariantMap).forEach(function (vk) {
+        var info = mountedVariantMap[vk];
+        var isTarget = vk === activeKey;
+        (info.specs || []).forEach(function (sp) {
+          if (!atlasMap.getLayer(sp.id)) return;
+          if (sp.isVector) {
+            atlasMap.setLayoutProperty(sp.id, "visibility", isTarget ? "visible" : "none");
+          } else {
+            atlasMap.setPaintProperty(sp.id, "raster-opacity", isTarget ? sp.targetOpacity : 0);
+          }
+        });
+      });
+    }
+
+    function mountDistrictOutlineForAtlasVariant(prefix, distPath, beforeLayerId, srcIds, lyrSpecs, variantKey) {
+      if (!distPath || !atlasMap) return;
+      fetchAtlasGeoJson(distPath, function (distGj) {
+        if (!distGj || !atlasMap || !mountedVariantMap[variantKey]) return;
+        var dSrc = prefix + "-dist-src";
+        var dLyr = prefix + "-dist-line";
+        var effBefore = atlasMap.getLayer("study-area-mask-fill") ? "study-area-mask-fill" : beforeLayerId;
+        if (!atlasMap.getSource(dSrc)) {
+          atlasMap.addSource(dSrc, { type: "geojson", data: distGj });
+          srcIds.push(dSrc);
+        }
+        if (!atlasMap.getLayer(dLyr)) {
+          atlasMap.addLayer(
+            {
+              id: dLyr,
+              type: "line",
+              source: dSrc,
+              layout: { visibility: currentVariantKey === variantKey ? "visible" : "none" },
+              paint: { "line-color": "#0F172A", "line-width": 1.15, "line-opacity": 0.68 }
+            },
+            effBefore
+          );
+          lyrSpecs.push({ id: dLyr, isVector: true });
+          mountedVariantMap[variantKey].layerIds.push(dLyr);
+        }
+      });
+    }
+
     function mountAndCrossfadeVariantOnAtlasMap(variantKey) {
       if (!atlasMap) return;
+
+      // Caso A: Capas locales empíricas del Modelo de Valor del Suelo GEE y LISA
+      if (ATLAS_LOCAL_VARIANTS[variantKey]) {
+        if (!atlasMap.isStyleLoaded()) {
+          atlasMap.once("load", function () {
+            mountAndCrossfadeVariantOnAtlasMap(variantKey);
+          });
+          return;
+        }
+        var localCfg = ATLAS_LOCAL_VARIANTS[variantKey];
+        var beforeLayerId = atlasMap.getLayer("study-area-mask-fill") ? "study-area-mask-fill" : undefined;
+
+        if (mountedVariantMap[variantKey]) {
+          syncMountedVariantVisibilities(variantKey);
+          return;
+        }
+
+        var prefix = "atlas-loc-" + variantKey;
+        var srcIds = [];
+        var lyrSpecs = [];
+        var cleanLightTiles = [
+          "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+        ];
+        var baseSrc = prefix + "-base-src";
+        var baseLyr = prefix + "-base-lyr";
+        atlasMap.addSource(baseSrc, { type: "raster", tiles: cleanLightTiles, tileSize: 256 });
+        atlasMap.addLayer(
+          {
+            id: baseLyr,
+            type: "raster",
+            source: baseSrc,
+            minzoom: 0,
+            maxzoom: 19,
+            paint: {
+              "raster-opacity": 0,
+              "raster-saturation": -0.82,
+              "raster-contrast": -0.12,
+              "raster-brightness-min": 0.18,
+              "raster-fade-duration": 220
+            }
+          },
+          beforeLayerId
+        );
+        srcIds.push(baseSrc);
+        lyrSpecs.push({ id: baseLyr, targetOpacity: 0.96, isVector: false });
+
+        if (localCfg.kind === "image_overlay") {
+          var imgUrl = new URL(localCfg.imagePath, window.location.origin + baseUrl).href;
+          var b = localCfg.bounds;
+          var quad = [
+            [b[0], b[3]],
+            [b[2], b[3]],
+            [b[2], b[1]],
+            [b[0], b[1]]
+          ];
+          var imgSrc = prefix + "-img-src";
+          var imgLyr = prefix + "-img-lyr";
+          atlasMap.addSource(imgSrc, { type: "image", url: imgUrl, coordinates: quad });
+          atlasMap.addLayer(
+            {
+              id: imgLyr,
+              type: "raster",
+              source: imgSrc,
+              paint: { "raster-opacity": 0, "raster-resampling": "linear", "raster-fade-duration": 220 }
+            },
+            beforeLayerId
+          );
+          srcIds.push(imgSrc);
+          lyrSpecs.push({ id: imgLyr, targetOpacity: localCfg.opacity || 0.9, isVector: false });
+
+          mountedVariantMap[variantKey] = {
+            sourceIds: srcIds,
+            layerIds: lyrSpecs.map(function (s) {
+              return s.id;
+            }),
+            specs: lyrSpecs
+          };
+          mountDistrictOutlineForAtlasVariant(prefix, localCfg.districtOutlinePath, beforeLayerId, srcIds, lyrSpecs, variantKey);
+          if (currentVariantKey === variantKey) {
+            syncMountedVariantVisibilities(variantKey);
+          }
+          return;
+        }
+
+        if (localCfg.kind === "geojson") {
+          mountedVariantMap[variantKey] = {
+            sourceIds: srcIds,
+            layerIds: lyrSpecs.map(function (s) {
+              return s.id;
+            }),
+            specs: lyrSpecs
+          };
+          if (currentVariantKey === variantKey) {
+            syncMountedVariantVisibilities(variantKey);
+          }
+          fetchAtlasGeoJson(localCfg.sourcePath, function (gj) {
+            if (!gj || !atlasMap || !mountedVariantMap[variantKey]) return;
+            var effBefore = atlasMap.getLayer("study-area-mask-fill") ? "study-area-mask-fill" : undefined;
+            var vSrc = prefix + "-vec-src";
+            var vFill = prefix + "-vec-fill";
+            var vLine = prefix + "-vec-line";
+            if (!atlasMap.getSource(vSrc)) {
+              atlasMap.addSource(vSrc, { type: "geojson", data: gj });
+              srcIds.push(vSrc);
+            }
+            var initVis = currentVariantKey === variantKey ? "visible" : "none";
+            if (!atlasMap.getLayer(vFill)) {
+              atlasMap.addLayer(
+                {
+                  id: vFill,
+                  type: "fill",
+                  source: vSrc,
+                  layout: { visibility: initVis },
+                  paint: { "fill-color": localCfg.fillExpr, "fill-opacity": localCfg.fillOpacity || 0.84 }
+                },
+                effBefore
+              );
+              lyrSpecs.push({ id: vFill, isVector: true });
+              mountedVariantMap[variantKey].layerIds.push(vFill);
+              attachAtlasFeaturePopup(vFill, localCfg.badge);
+            }
+            if (!atlasMap.getLayer(vLine)) {
+              var linePaint = localCfg.fineMesh
+                ? {
+                    "line-color": "#1E293B",
+                    "line-width": ["interpolate", ["linear"], ["zoom"], 9, 0.04, 11.5, 0.14, 13.5, 0.35, 16, 0.8],
+                    "line-opacity": ["interpolate", ["linear"], ["zoom"], 9, 0.16, 12, 0.36, 15, 0.62]
+                  }
+                : { "line-color": "#1E293B", "line-width": 0.75, "line-opacity": 0.72 };
+              atlasMap.addLayer(
+                {
+                  id: vLine,
+                  type: "line",
+                  source: vSrc,
+                  layout: { visibility: initVis },
+                  paint: linePaint
+                },
+                effBefore
+              );
+              lyrSpecs.push({ id: vLine, isVector: true });
+              mountedVariantMap[variantKey].layerIds.push(vLine);
+            }
+            mountDistrictOutlineForAtlasVariant(prefix, localCfg.districtOutlinePath, effBefore, srcIds, lyrSpecs, variantKey);
+            if (currentVariantKey === variantKey) {
+              syncMountedVariantVisibilities(variantKey);
+            }
+          });
+          return;
+        }
+      }
+
+      // Caso B: Mosaicos satelitales e índices Copernicus globales
       resolveBasemapTiles(variantKey, function () {
         if (!atlasMap.isStyleLoaded()) {
           atlasMap.once("load", function () {
@@ -3622,7 +4152,7 @@
               beforeLayerId
             );
             srcIds.push(uSrc);
-            lyrSpecs.push({ id: uLyr, targetOpacity: uOp });
+            lyrSpecs.push({ id: uLyr, targetOpacity: uOp, isVector: false });
           } else if (bm.lowZoomFallbackTiles) {
             var fSrc = prefix + "-fallback-src";
             var fLyr = prefix + "-fallback-lyr";
@@ -3639,7 +4169,7 @@
               beforeLayerId
             );
             srcIds.push(fSrc);
-            lyrSpecs.push({ id: fLyr, targetOpacity: 1 });
+            lyrSpecs.push({ id: fLyr, targetOpacity: 1, isVector: false });
           }
 
           var mSrc = prefix + "-main-src";
@@ -3661,7 +4191,7 @@
             beforeLayerId
           );
           srcIds.push(mSrc);
-          lyrSpecs.push({ id: mLyr, targetOpacity: 1 });
+          lyrSpecs.push({ id: mLyr, targetOpacity: 1, isVector: false });
 
           if (bm.overlayTiles) {
             var oSrc = prefix + "-overlay-src";
@@ -3680,7 +4210,7 @@
               beforeLayerId
             );
             srcIds.push(oSrc);
-            lyrSpecs.push({ id: oLyr, targetOpacity: oOp });
+            lyrSpecs.push({ id: oLyr, targetOpacity: oOp, isVector: false });
           }
 
           mountedVariantMap[variantKey] = {
@@ -3694,15 +4224,7 @@
 
         // Si aún estamos en este variantKey como objetivo activo, hacer cross-fade de opacidad
         if (currentVariantKey !== variantKey) return;
-        Object.keys(mountedVariantMap).forEach(function (vk) {
-          var info = mountedVariantMap[vk];
-          var isTarget = vk === variantKey;
-          (info.specs || []).forEach(function (sp) {
-            if (atlasMap.getLayer(sp.id)) {
-              atlasMap.setPaintProperty(sp.id, "raster-opacity", isTarget ? sp.targetOpacity : 0);
-            }
-          });
-        });
+        syncMountedVariantVisibilities(variantKey);
       });
     }
 
